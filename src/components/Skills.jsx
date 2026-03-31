@@ -56,7 +56,7 @@ const diagramNodes = [
 
 const ArchitectureDiagram = () => {
   return (
-    <div className="w-full h-full min-h-[500px] lg:min-h-[700px] relative pointer-events-none select-none">
+    <div className="w-full h-full min-h-125 lg:min-h-175 relative pointer-events-none select-none">
       <svg viewBox="0 0 800 800" className="w-full h-full absolute inset-0 drop-shadow-2xl">
         <defs>
           <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
@@ -164,7 +164,7 @@ const Skills = () => {
         </motion.h1>
       </div>
 
-      <div className="w-full max-w-[1400px] mx-auto z-10 flex flex-col pt-10">
+      <div className="w-full max-w-350 mx-auto z-10 flex flex-col pt-10">
         {/* Header matching site style */}
         <motion.div 
           className="flex flex-col mb-16 lg:mb-24"
