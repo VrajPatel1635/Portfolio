@@ -182,6 +182,7 @@ const Projects = () => {
         };
 
         window.addEventListener('scroll', handleScroll, {passive: true});
+        handleScroll(); // Calculate initial progress
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
@@ -202,7 +203,7 @@ const Projects = () => {
 
                     {/* Animated Scroll Progress Spine */}
                     <div
-                        className="absolute left-[15px] md:left-[calc(50%-1px)] top-0 w-0.5 bg-zinc-100 transition-all duration-200 ease-out will-change-height"
+                        className="absolute left-[15px] md:left-[calc(50%-1px)] top-0 w-0.5 bg-zinc-100 will-change-height"
                         style={{ height: `${scrollProgress * 100}%` }}
                     />
 
