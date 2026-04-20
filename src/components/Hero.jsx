@@ -2,18 +2,22 @@ import React, { useState, useEffect, useRef } from 'react';
 import '../index.css';
 
 const Hero = () => {
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [isMounted, setIsMounted] = useState(false);
+  // useRef instead of useState — mouse position is only needed by
+  // SmoothCursor (which has its own listener). Storing it in state
+  // was causing a re-render on every mousemove with no visible effect.
+  const mousePosRef = useRef({ x: 0, y: 0 });
   const scrollBadgeRef = useRef(null);
 
   useEffect(() => {
     setIsMounted(true);
     const handleMouseMove = (e) => {
-      const x = (e.clientX / window.innerWidth - 0.5) * 2;
-      const y = (e.clientY / window.innerHeight - 0.5) * 2;
-      setMousePos({ x, y });
+      mousePosRef.current = {
+        x: (e.clientX / window.innerWidth - 0.5) * 2,
+        y: (e.clientY / window.innerHeight - 0.5) * 2,
+      };
     };
-    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
@@ -44,7 +48,9 @@ const Hero = () => {
   }
 
   return (
+    // id="home" added so the Navbar #home anchor resolves correctly
     <section
+      id="home"
       className="relative w-full min-h-dvh flex flex-col justify-center overflow-hidden z-10 pointer-events-none"
       style={{ background: '#ffffff' }}
     >
@@ -55,6 +61,7 @@ const Hero = () => {
       {/* Large "01" watermark */}
       <div
         className="absolute top-1/2 -translate-y-1/2 pointer-events-none select-none"
+        aria-hidden="true"
         style={{
           left: '-2%',
           fontSize: 'clamp(200px, 28vw, 400px)',
@@ -79,6 +86,7 @@ const Hero = () => {
         <div
           key={i}
           className="absolute pointer-events-none select-none"
+          aria-hidden="true"
           style={{
             ...pos,
             color: '#d4d4d4',
@@ -96,6 +104,7 @@ const Hero = () => {
       {/* Dot grid background (right side) */}
       <svg
         className="absolute pointer-events-none select-none"
+        aria-hidden="true"
         style={{
           right: '5%',
           top: '15%',
@@ -109,7 +118,7 @@ const Hero = () => {
       </svg>
 
       {/* ===== MAIN CONTENT ===== */}
-      <div className="relative z-20 w-full max-w-[1400px] mx-auto px-6 md:px-12 lg:px-20 py-20 md:py-0">
+      <div className="relative z-20 w-full max-w-350 mx-auto px-6 md:px-12 lg:px-20 py-20 md:py-0">
         <div className="flex flex-col lg:flex-row items-start lg:items-center gap-12 lg:gap-8">
 
           {/* ── LEFT COLUMN ── */}
@@ -275,11 +284,21 @@ const Hero = () => {
           }}
           className="relative w-20 h-20 md:w-24 md:h-24 flex items-center justify-center"
           style={{ cursor: 'pointer' }}
+          role="button"
+          aria-label="Scroll down to About section"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              const el = document.getElementById('about');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }
+          }}
         >
           {/* Rotating text */}
           <svg
             className="absolute inset-0 w-full h-full"
             viewBox="0 0 100 100"
+            aria-hidden="true"
             style={{ animation: 'spin-slow 12s linear infinite' }}
           >
             <defs>
@@ -304,78 +323,11 @@ const Hero = () => {
             </text>
           </svg>
           {/* Center arrow */}
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="#0a0a0a" strokeWidth={2}>
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="#0a0a0a" strokeWidth={2} aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 13.5L12 21m0 0l-7.5-7.5M12 21V3" />
           </svg>
         </div>
       </div>
-
-      {/* Inline styles for hero-specific animations */}
-      <style dangerouslySetInnerHTML={{
-        __html: `
-        @keyframes pulse-dot {
-          0%, 100% { opacity: 1; box-shadow: 0 0 6px rgba(34,197,94,0.5); }
-          50% { opacity: 0.5; box-shadow: 0 0 12px rgba(34,197,94,0.8); }
-        }
-        @keyframes spin-slow {
-          100% { transform: rotate(360deg); }
-        }
-        .hero-btn-primary {
-          display: inline-flex;
-          align-items: center;
-          gap: 10px;
-          padding: 14px 32px;
-          background: #0a0a0a;
-          color: #ffffff;
-          font-family: "Rajdhani", sans-serif;
-          font-size: 13px;
-          font-weight: 700;
-          letter-spacing: 0.15em;
-          text-transform: uppercase;
-          border: 2px solid #0a0a0a;
-          transition: all 0.3s ease;
-          position: relative;
-          overflow: hidden;
-        }
-        .hero-btn-primary::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: -100%;
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-          transition: left 0.5s ease;
-        }
-        .hero-btn-primary:hover::before {
-          left: 100%;
-        }
-        .hero-btn-primary:hover {
-          background: #222;
-          box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-          transform: translateY(-1px);
-        }
-        .hero-btn-outline {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          padding: 14px 32px;
-          background: transparent;
-          color: #0a0a0a;
-          font-family: "Rajdhani", sans-serif;
-          font-size: 13px;
-          font-weight: 700;
-          letter-spacing: 0.15em;
-          text-transform: uppercase;
-          border: 2px dashed #ccc;
-          transition: all 0.3s ease;
-        }
-        .hero-btn-outline:hover {
-          border-color: #0a0a0a;
-          border-style: solid;
-          transform: translateY(-1px);
-        }
-      `}} />
     </section>
   );
 };

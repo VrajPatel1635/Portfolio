@@ -18,6 +18,35 @@ const Navbar = () => {
   const overlayRef = useRef(null);
   const hamburgerRef = useRef(null);
 
+  const openMenu = () => {
+    if (isAnimating) return;
+    setIsAnimating(true);
+    setIsClosing(false);
+    setIsOpen(true);
+    setTimeout(() => setIsAnimating(false), 900);
+  };
+
+  const closeMenu = useCallback(() => {
+    if (isAnimating) return;
+    setIsAnimating(true);
+    setIsClosing(true);
+    setIsOpen(false);
+    // Wait for close animation to fully complete, then remove from DOM
+    setTimeout(() => {
+      setIsClosing(false);
+      setIsAnimating(false);
+    }, 900);
+  }, [isAnimating]);
+
+  // Keyboard: Escape key closes the overlay
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isOpen) closeMenu();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, closeMenu]);
+
   // Detect if hamburger is over a light-background section
   useEffect(() => {
     const checkSection = () => {
@@ -109,26 +138,6 @@ const Navbar = () => {
     return () => { document.body.style.overflow = ''; };
   }, [isOpen, isClosing]);
 
-  const openMenu = () => {
-    if (isAnimating) return;
-    setIsAnimating(true);
-    setIsClosing(false);
-    setIsOpen(true);
-    setTimeout(() => setIsAnimating(false), 900);
-  };
-
-  const closeMenu = useCallback(() => {
-    if (isAnimating) return;
-    setIsAnimating(true);
-    setIsClosing(true);
-    setIsOpen(false);
-    // Wait for close animation to fully complete, then remove from DOM
-    setTimeout(() => {
-      setIsClosing(false);
-      setIsAnimating(false);
-    }, 900);
-  }, [isAnimating]);
-
   const handleNavClick = (e, href) => {
     e.preventDefault();
     closeMenu();
@@ -149,9 +158,12 @@ const Navbar = () => {
       {/* ─── HAMBURGER BUTTON ─── */}
       <button
         ref={hamburgerRef}
+        id="nav-hamburger-btn"
         className={`nav-hamburger ${isOpen ? 'active' : ''} ${onLightSection && !isOpen ? 'on-light' : ''}`}
         onClick={isOpen ? closeMenu : openMenu}
         aria-label="Toggle navigation menu"
+        aria-expanded={isOpen}
+        aria-controls="nav-overlay"
       >
         <div className="hamburger-box">
           <span className="hamburger-line line-1" />
@@ -177,7 +189,7 @@ const Navbar = () => {
       </button>
 
       {/* ─── FULLSCREEN OVERLAY ─── */}
-      <div className={`nav-overlay ${overlayClass}`} ref={overlayRef}>
+      <div className={`nav-overlay ${overlayClass}`} ref={overlayRef} id="nav-overlay" role="dialog" aria-modal="true" aria-label="Navigation menu">
         {/* Curtain panels */}
         <div className="curtain-left" />
         <div className="curtain-right" />
@@ -265,7 +277,8 @@ const Navbar = () => {
           pointer-events: auto;
         }
         .nav-hamburger:hover {
-          background: rgba(255, 255, 255, 0.08);
+          background: rgba(10, 10, 10, 0.85);
+          border-color: rgba(255, 255, 255, 0.15);
           transform: scale(1.08);
         }
         .nav-hamburger:hover .hamburger-ring-dash {
@@ -353,8 +366,8 @@ const Navbar = () => {
 
         /* Active state: morph to X */
         .nav-hamburger.active {
-          background: transparent;
-          border-color: transparent;
+          background: rgba(10, 10, 10, 0.6);
+          border-color: rgba(255, 255, 255, 0.08);
         }
         .nav-hamburger.active .hamburger-box {
           align-items: center;

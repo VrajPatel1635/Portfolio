@@ -1,260 +1,522 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 
-const skillCategories = [
+// ─── Logo URL via Simple Icons CDN ───────────────────────────────
+// Some slugs use overrides due to Simple Icons removals/renames
+// no global overrides needed — slugs fixed directly in data
+const logoUrl = (slug, color) =>
+  `https://cdn.simpleicons.org/${slug}/${color.replace("#", "")}`;
+
+// ─── Skills Data ──────────────────────────────────────────────────
+const LANES = [
   {
-    title: "FRONTEND",
-    label: "[CLIENT]",
+    id: "frontend",
+    label: "FRONTEND",
+    num: "01",
+    direction: "left",
+    duration: 40,
     skills: [
-      { name: "React", key: true, color: "#61DAFB", icon: "fa-brands fa-react" },
-      { name: "Next.js", key: true, color: "#ffffff", icon: "fa-solid fa-n" },
-      { name: "JavaScript", key: false, color: "#F7DF1E", icon: "fa-brands fa-js" },
-      { name: "Tailwind CSS", key: false, color: "#38B2AC", icon: "fa-solid fa-wind" },
-      { name: "HTML & CSS", key: false, color: "#E34F26", icon: "fa-brands fa-html5" },
+      { name: "React",       color: "#61DAFB", slug: "react"            },
+      { name: "Next.js",    color: "#FFFFFF", slug: "nextdotjs"         },
+      { name: "JavaScript", color: "#F7DF1E", slug: "javascript"        },
+      { name: "Tailwind",   color: "#06B6D4", slug: "tailwindcss"       },
+      { name: "HTML5",      color: "#E34F26", slug: "html5"             },
+      { name: "CSS3",       color: "#1572B6", slug: "css"               },
     ],
   },
   {
-    title: "BACKEND",
-    label: "[SERVER]",
+    id: "backend",
+    label: "BACKEND",
+    num: "02",
+    direction: "right",
+    duration: 48,
     skills: [
-      { name: "Node.js", key: true, color: "#339933", icon: "fa-brands fa-node" },
-      { name: "Express.js", key: false, color: "#ffffff", icon: "fa-solid fa-server" },
-      { name: "REST APIs", key: false, color: "#ffffff", icon: "fa-solid fa-network-wired" },
-      { name: "JWT Auth", key: false, color: "#FF0088", icon: "fa-solid fa-key" },
-      { name: "API Design", key: false, color: "#ffffff", icon: "fa-solid fa-bezier-curve" },
+      { name: "Node.js",    color: "#339933", slug: "nodedotjs"         },
+      { name: "Express.js", color: "#FFFFFF", slug: "express"           },
+      { name: "MongoDB",    color: "#47A248", slug: "mongodb"           },
+      { name: "MySQL",      color: "#4479A1", slug: "mysql"             },
+      { name: "JWT Auth",   color: "#FB015B", slug: "jsonwebtokens"     },
+      { name: "REST API",   color: "#85EA2D", slug: "swagger"           },
     ],
   },
   {
-    title: "DATABASE",
-    label: "[DATA]",
+    id: "tools",
+    label: "TOOLS",
+    num: "03",
+    direction: "left",
+    duration: 36,
     skills: [
-      { name: "MongoDB", key: true, color: "#47A248", icon: "fa-solid fa-database" },
-      { name: "MySQL", key: false, color: "#00758F", icon: "fa-solid fa-table" },
-    ],
-  },
-  {
-    title: "TOOLS & LANGUAGES",
-    label: "[CORE]",
-    skills: [
-      { name: "Git & GitHub", key: true, color: "#F05032", icon: "fa-brands fa-github" },
-      { name: "VS Code", key: false, color: "#007ACC", icon: "fa-solid fa-code" },
-      { name: "Postman", key: false, color: "#FF6C37", icon: "fa-solid fa-user-astronaut" },
-      { name: "Java", key: false, color: "#fca311", icon: "fa-brands fa-java" },
-      { name: "Python", key: false, color: "#3776AB", icon: "fa-brands fa-python" },
+      { name: "Git",        color: "#F05032", slug: "git"               },
+      { name: "GitHub",     color: "#FFFFFF", slug: "github"            },
+      { name: "VS Code",    color: "#007ACC", slug: "vscodium"          },
+      { name: "Postman",    color: "#FF6C37", slug: "postman"           },
+      { name: "Python",     color: "#3776AB", slug: "python"            },
+      { name: "Java",       color: "#ED8B00", slug: "openjdk"           },
     ],
   },
 ];
 
-const diagramNodes = [
-  { id: "SYSTEM", x: 400, y: 400, label: "SYS.CORE" },
-  { id: "FRONTEND", x: 140, y: 150, label: "FRONTEND", path: "M 400 400 L 400 150 L 140 150" },
-  { id: "BACKEND", x: 660, y: 150, label: "BACKEND", path: "M 400 400 L 400 150 L 660 150" },
-  { id: "TOOLS", x: 100, y: 400, label: "TOOLS", path: "M 400 400 L 100 400" },
-  { id: "DATABASE", x: 700, y: 400, label: "DATABASE", path: "M 400 400 L 700 400" },
-  { id: "LANGUAGES", x: 140, y: 650, label: "LANGUAGES", path: "M 400 400 L 400 650 L 140 650" },
-];
+// ─── Arc Lane ────────────────────────────────────────────────────
+const ArcLane = ({ lane, containerRef }) => {
+  const chipRefs = useRef([]);
+  // duplicate 2× for seamless infinite loop
+  const chips = [...lane.skills, ...lane.skills];
 
-const ArchitectureDiagram = () => {
+  useEffect(() => {
+    let rafId;
+
+    const tick = () => {
+      const container = containerRef.current;
+      if (!container) {
+        rafId = requestAnimationFrame(tick);
+        return;
+      }
+
+      const cr  = container.getBoundingClientRect();
+      const cx  = cr.left + cr.width / 2;
+      const hw  = cr.width / 2;
+
+      chipRefs.current.forEach((el) => {
+        if (!el) return;
+
+        const r = el.getBoundingClientRect();
+
+        // hide chips outside visible section
+        if (r.right < cr.left - 80 || r.left > cr.right + 80) {
+          el.style.opacity = "0";
+          return;
+        }
+
+        const chipCx = r.left + r.width / 2;
+        const dist   = Math.min(Math.abs(chipCx - cx) / hw, 1);
+
+        // ── Arc transforms ──
+        const ty = -(Math.pow(dist, 1.5) * 70);
+        const sc = 1 - dist * 0.46;
+        const op = Math.max(0.06, 1 - dist * 0.63);
+
+        el.style.transform = `translateY(${ty}px) scale(${sc})`;
+        el.style.opacity   = op;
+
+        // ── Color intensity (brand color ↔ grayscale) ──
+        const ci = Math.max(0, 1 - dist * 3.0); // 1 at center, 0 beyond dist≈0.33
+        const logo = el.querySelector(".arc-logo");
+        const name = el.querySelector(".arc-name");
+        if (logo) {
+          const gs = 1 - ci;
+          const br = 0.35 + 0.65 * ci;
+          logo.style.filter = `grayscale(${gs.toFixed(2)}) brightness(${br.toFixed(2)})`;
+        }
+        if (name) {
+          name.style.opacity = (0.25 + 0.75 * ci).toFixed(2);
+        }
+
+        // ── Glow (simple — to be refined later) ──
+        const colHex = el.dataset.color || "#ffffff";
+        const rr = parseInt(colHex.slice(1, 3), 16);
+        const gg = parseInt(colHex.slice(3, 5), 16);
+        const bb = parseInt(colHex.slice(5, 7), 16);
+
+        if (ci > 0.04) {
+          el.style.borderColor = `rgba(${rr},${gg},${bb},${(ci * 0.8).toFixed(2)})`;
+          el.style.boxShadow   =
+            `0 0 20px rgba(${rr},${gg},${bb},${(ci * 0.4).toFixed(2)}), ` +
+            `0 0 50px rgba(${rr},${gg},${bb},${(ci * 0.14).toFixed(2)})`;
+        } else {
+          el.style.borderColor = "rgba(255,255,255,0.08)";
+          el.style.boxShadow   = "none";
+        }
+      });
+
+      rafId = requestAnimationFrame(tick);
+    };
+
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, []);
+
   return (
-    <div className="w-full h-full min-h-125 lg:min-h-175 relative pointer-events-none select-none">
-      <svg viewBox="0 0 800 800" className="w-full h-full absolute inset-0 drop-shadow-2xl">
-        <defs>
-          <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
-            <path
-              d="M 32 0 L 0 0 0 32"
-              fill="none"
-              stroke="rgba(255,255,255,0.02)"
-              strokeWidth="1"
-            />
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#grid)" />
+    <div className="arc-lane-wrapper">
+      {/* left/right dark fade overlays */}
+      <div className="arc-fade arc-fade--left"  />
+      <div className="arc-fade arc-fade--right" />
 
-        {/* Drawn Connections */}
-        {diagramNodes.map(
-          (node, i) =>
-            node.path && (
-              <motion.path
-                key={`path-${i}`}
-                d={node.path}
-                fill="none"
-                stroke="rgba(255,255,255,0.15)"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                initial={{ pathLength: 0, opacity: 0 }}
-                whileInView={{ pathLength: 1, opacity: 1 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 1.5, ease: "easeInOut", delay: 0.2 }}
-              />
-            )
-        )}
-
-        {/* Node Points & Labels */}
-        {diagramNodes.map((node, i) => (
-          <motion.g
-            key={`node-${i}`}
-            initial={{ opacity: 0, scale: 0 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.5, ease: "backOut", delay: 1.2 + i * 0.1 }}
+      {/* scrolling row */}
+      <div
+        className={`arc-row arc-row--${lane.direction}`}
+        style={{ animationDuration: `${lane.duration}s` }}
+      >
+        {chips.map((skill, i) => (
+          <div
+            key={i}
+            ref={(el) => (chipRefs.current[i] = el)}
+            className="arc-chip"
+            data-color={skill.color}
           >
-            {/* Outer ring */}
-            <circle
-              cx={node.x}
-              cy={node.y}
-              r="14"
-              fill="none"
-              stroke="rgba(255,255,255,0.1)"
-              strokeWidth="1"
+            <img
+              className="arc-logo"
+              src={logoUrl(skill.slug, skill.color)}
+              alt={skill.name}
+              draggable={false}
             />
-            {/* Inner solid node */}
-            <circle cx={node.x} cy={node.y} r="4" fill="rgba(255,255,255,0.8)" />
-
-            <text
-              x={node.x}
-              y={node.y - 24}
-              fill="rgba(255,255,255,0.5)"
-              fontSize="12"
-              fontFamily="monospace"
-              textAnchor="middle"
-              letterSpacing="0.1em"
-            >
-              {node.label}
-            </text>
-          </motion.g>
+            <span className="arc-name">{skill.name}</span>
+          </div>
         ))}
-
-        {/* Central Pulse */}
-        <motion.circle
-          cx="400"
-          cy="400"
-          r="6"
-          fill="#fff"
-          animate={{ opacity: [1, 0.4, 1], scale: [1, 1.5, 1] }}
-          transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
-        />
-        <motion.circle
-          cx="400"
-          cy="400"
-          r="14"
-          fill="none"
-          stroke="rgba(255,255,255,0.4)"
-          animate={{ scale: [1, 2.5], opacity: [0.8, 0] }}
-          transition={{ repeat: Infinity, duration: 3, ease: "easeOut" }}
-        />
-      </svg>
+      </div>
     </div>
   );
 };
 
+// ─── Main Skills Section ──────────────────────────────────────────
 const Skills = () => {
-  return (
-    <section id="skills" className="relative min-h-screen flex items-center justify-center py-20 px-6 md:px-20 overflow-hidden bg-black/10 backdrop-blur-md">
-      {/* Massive Background Typography */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none select-none z-0 overflow-hidden w-full flex justify-center">
-        <motion.h1
-          initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 2, ease: "easeOut" }}
-          className="text-[18vw] font-black text-white/1.5 tracking-tighter leading-none whitespace-nowrap"
-        >
-          SKILLS
-        </motion.h1>
-      </div>
+  const containerRef = useRef(null);
 
-      <div className="w-full max-w-350 mx-auto z-10 flex flex-col pt-10">
-        {/* Header matching site style */}
-        <motion.div 
-          className="flex flex-col mb-16 lg:mb-24"
-          initial={{ opacity: 0, y: 30 }}
+  return (
+    <section id="skills" className="arc-section">
+
+      {/* Watermark */}
+      <div className="arc-watermark" aria-hidden="true">SKILLS</div>
+
+      {/* Crosshair markers */}
+      <span className="arc-cross" style={{ top: "10%",  left:  "5%" }}>+</span>
+      <span className="arc-cross" style={{ bottom: "12%", right: "6%" }}>+</span>
+
+      {/* Inner container — used as the center reference for arc math */}
+      <div className="arc-inner" ref={containerRef}>
+
+        {/* ── Section Header ── */}
+        <motion.div
+          className="arc-header"
+          initial={{ opacity: 0, y: 28 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
         >
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-12 h-px bg-white/30" />
-            <span className="text-[10px] tracking-[0.4em] font-light text-white/50 uppercase">
-              Architecture & Tech
-            </span>
+          <div className="arc-header-eyebrow">
+            <span className="arc-header-rule" />
+            <span className="arc-header-sub">Architecture &amp; Tech</span>
           </div>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-light text-white tracking-tight uppercase leading-[1.1]">
-            03 —— <br className="md:hidden" /><span className="font-bold">Stack Architecture.</span>
+          <h2 className="arc-header-title">
+            TECHNOLOGY <span className="arc-title-stroke">STACK.</span>
           </h2>
         </motion.div>
 
-        {/* Split Layout Container */}
-        <div className="flex flex-col lg:flex-row w-full gap-12 lg:gap-24">
-          
-          {/* Left Diagram Container */}
-          <motion.div 
-            className="w-full lg:w-[45%] lg:sticky lg:top-32 relative border border-white/5 bg-black/20 backdrop-blur-xl rounded-3xl overflow-hidden self-start"
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 1, delay: 0.2 }}
-          >
-            {/* Subtle Gradient Glow in bg */}
-            <div className="absolute inset-0 bg-linear-to-br from-white/3 to-transparent pointer-events-none" />
-            <ArchitectureDiagram />
-          </motion.div>
+        {/* ── Lane Labels row ── */}
+        <motion.div
+          className="arc-lane-labels"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          {LANES.map((lane) => (
+            <div key={lane.id} className="arc-lane-meta">
+              <span className="arc-lane-num">{lane.num}</span>
+              <span className="arc-lane-lbl">{lane.label}</span>
+            </div>
+          ))}
+        </motion.div>
 
-          {/* Right Skills List */}
-          <div className="w-full lg:w-[55%] flex flex-col gap-10 lg:gap-14 lg:py-10">
-            {skillCategories.map((cat, index) => (
-              <motion.div
-                key={index}
-                className="flex flex-col border-t border-white/8 pt-6 group/cat"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-50px" }}
-                transition={{ delay: index * 0.15, duration: 0.6 }}
-              >
-                {/* Category Header */}
-                <div className="flex items-center justify-between mb-6">
-                  <span className="text-xs font-mono tracking-[0.2em] text-white/30 group-hover/cat:text-white/50 transition-colors duration-500">
-                    {cat.label}
-                  </span>
-                  <span className="text-sm font-semibold tracking-widest text-white/50 uppercase">
-                    {cat.title}
-                  </span>
-                </div>
+        {/* ── Arc Lanes ── */}
+        <motion.div
+          className="arc-lanes"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 1.2, delay: 0.3 }}
+        >
+          {LANES.map((lane) => (
+            <ArcLane key={lane.id} lane={lane} containerRef={containerRef} />
+          ))}
+        </motion.div>
 
-                {/* Skill Items */}
-                <div className="flex flex-wrap gap-x-8 gap-y-4">
-                  {cat.skills.map((skill, sIdx) => (
-                    <div
-                      key={sIdx}
-                      className="group relative flex items-center gap-3 cursor-crosshair py-1"
-                      style={{ "--brand-color": skill.color }}
-                    >
-                      {/* Indicator Dot */}
-                      {skill.key ? (
-                        <div className="relative w-1.5 h-1.5 flex items-center justify-center">
-                          <span className="absolute w-full h-full rounded-full bg-white/20 group-hover:bg-[var(--brand-color)] group-hover:shadow-[0_0_8px_var(--brand-color)] transition-colors duration-300" />
-                          <span className="absolute w-full h-full rounded-full bg-[var(--brand-color)] opacity-0 group-hover:animate-ping" />
-                        </div>
-                      ) : (
-                        <span className="w-1.5 h-1.5 rounded-sm border border-white/10 group-hover:border-[var(--brand-color)] group-hover:bg-white/20 transition-all duration-300" />
-                      )}
+        {/* ── Footer metadata ── */}
+        <motion.div
+          className="arc-footer"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, delay: 0.5 }}
+        >
+          <span>16 TECHNOLOGIES</span>
+          <span className="arc-dot">·</span>
+          <span>CONSTANTLY EVOLVING</span>
+          <span className="arc-dot">·</span>
+          <span>MERN STACK CORE</span>
+        </motion.div>
 
-                      {/* Brand Logo */}
-                      <i className={`${skill.icon} text-xl md:text-2xl text-transparent [-webkit-text-stroke:1px_rgba(255,255,255,0.25)] transition-all duration-300 group-hover:[-webkit-text-stroke:0px] group-hover:text-[var(--brand-color)] group-hover:scale-110 will-change-transform`} />
-
-                      {/* Text Outline to Fill Effect */}
-                      <span className="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight text-transparent [-webkit-text-stroke:1px_rgba(255,255,255,0.25)] transition-all duration-300 group-hover:[-webkit-text-stroke:0px] group-hover:text-[var(--brand-color)] group-hover:translate-x-2 will-change-transform">
-                        {skill.name}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-            ))}
-          </div>
-          
-        </div>
       </div>
+
+      {/* ── Styles ── */}
+      <style>{`
+
+        /* ════ Section ══════════════════════════════════════════ */
+        .arc-section {
+          position: relative;
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+          padding: 80px 0;
+          background: rgba(5, 5, 5, 0.15);
+          backdrop-filter: blur(2px);
+        }
+
+        .arc-watermark {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          font-family: "Orbitron", sans-serif;
+          font-size: clamp(80px, 15vw, 210px);
+          font-weight: 900;
+          color: transparent;
+          -webkit-text-stroke: 1px rgba(255,255,255,0.035);
+          white-space: nowrap;
+          pointer-events: none;
+          user-select: none;
+          z-index: 0;
+          letter-spacing: 0.05em;
+        }
+
+        .arc-cross {
+          position: absolute;
+          font-size: 18px;
+          font-weight: 300;
+          color: rgba(255,255,255,0.18);
+          font-family: monospace;
+          pointer-events: none;
+          user-select: none;
+          z-index: 1;
+        }
+
+        /* ════ Inner ════════════════════════════════════════════ */
+        .arc-inner {
+          position: relative;
+          z-index: 2;
+          width: 100%;
+          max-width: 1400px;
+          margin: 0 auto;
+        }
+
+        /* ════ Header ═══════════════════════════════════════════ */
+        .arc-header {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          margin-bottom: 36px;
+          padding: 0 64px;
+        }
+
+        .arc-header-eyebrow {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+        }
+
+        .arc-header-rule {
+          display: block;
+          width: 48px;
+          height: 1px;
+          background: rgba(255,255,255,0.3);
+          flex-shrink: 0;
+        }
+
+        .arc-header-sub {
+          font-family: "Rajdhani", sans-serif;
+          font-size: 10px;
+          letter-spacing: 0.4em;
+          color: rgba(255,255,255,0.5);
+          text-transform: uppercase;
+        }
+
+        .arc-header-title {
+          font-family: "Orbitron", sans-serif;
+          font-size: clamp(28px, 4.5vw, 56px);
+          font-weight: 800;
+          color: #ffffff;
+          letter-spacing: -0.02em;
+          line-height: 1.05;
+          margin: 0;
+          text-transform: uppercase;
+        }
+
+        .arc-title-stroke {
+          color: transparent;
+          -webkit-text-stroke: 2px #ffffff;
+        }
+
+        /* ════ Lane labels row ══════════════════════════════════ */
+        .arc-lane-labels {
+          display: flex;
+          flex-direction: column;
+          gap: 0;
+          padding: 0 64px;
+          margin-bottom: 4px;
+        }
+
+        .arc-lane-meta {
+          display: flex;
+          align-items: baseline;
+          gap: 10px;
+          padding: 10px 0 0 0;
+          border-top: 1px solid rgba(255,255,255,0.05);
+        }
+        .arc-lane-meta:first-child { border-top: none; }
+
+        .arc-lane-num {
+          font-family: "Rajdhani", sans-serif;
+          font-size: 9px;
+          letter-spacing: 0.18em;
+          color: rgba(255,255,255,0.2);
+        }
+
+        .arc-lane-lbl {
+          font-family: "Orbitron", sans-serif;
+          font-size: 9px;
+          letter-spacing: 0.22em;
+          color: rgba(255,255,255,0.28);
+          text-transform: uppercase;
+        }
+
+        /* ════ Lanes ════════════════════════════════════════════ */
+        .arc-lanes {
+          display: flex;
+          flex-direction: column;
+          gap: 0;
+        }
+
+        /* ════ Single lane wrapper ══════════════════════════════ */
+        .arc-lane-wrapper {
+          position: relative;
+          overflow: hidden; /* clips horizontal overflow */
+        }
+
+        /* dark gradient fade — left & right edges */
+        .arc-fade {
+          position: absolute;
+          top: 0;
+          height: 100%;
+          width: 200px;
+          z-index: 10;
+          pointer-events: none;
+        }
+        .arc-fade--left  {
+          left: 0;
+          background: linear-gradient(to right, #050505 0%, rgba(5,5,5,0.7) 60%, transparent 100%);
+        }
+        .arc-fade--right {
+          right: 0;
+          background: linear-gradient(to left, #050505 0%, rgba(5,5,5,0.7) 60%, transparent 100%);
+        }
+
+        /* ════ Scrolling row ════════════════════════════════════ */
+        .arc-row {
+          display: flex;
+          align-items: flex-end; /* chips baseline at bottom — arc pushes edges UP */
+          gap: 52px;
+          width: max-content;
+          /* top padding ≥ max arc upward travel (70px) + some buffer */
+          padding: 92px 100px 22px 100px;
+          will-change: transform;
+        }
+
+        .arc-row--left {
+          animation-name: arc-scroll-left;
+          animation-timing-function: linear;
+          animation-iteration-count: infinite;
+        }
+        .arc-row--right {
+          animation-name: arc-scroll-right;
+          animation-timing-function: linear;
+          animation-iteration-count: infinite;
+        }
+
+        @keyframes arc-scroll-left {
+          from { transform: translateX(0);    }
+          to   { transform: translateX(-50%); }
+        }
+        @keyframes arc-scroll-right {
+          from { transform: translateX(-50%); }
+          to   { transform: translateX(0);    }
+        }
+
+        /* ════ Chip ═════════════════════════════════════════════ */
+        .arc-chip {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 13px 20px 13px 15px;
+          border-radius: 40px;
+          border: 1px solid rgba(255,255,255,0.08);
+          background: rgba(255,255,255,0.03);
+          white-space: nowrap;
+          flex-shrink: 0;
+          cursor: default;
+          user-select: none;
+          transform-origin: center bottom;
+          will-change: transform, opacity;
+        }
+
+        .arc-logo {
+          width: 26px;
+          height: 26px;
+          object-fit: contain;
+          flex-shrink: 0;
+          display: block;
+          will-change: filter;
+          pointer-events: none;
+        }
+
+        .arc-name {
+          font-family: "Orbitron", sans-serif;
+          font-size: 10.5px;
+          font-weight: 600;
+          letter-spacing: 0.15em;
+          color: #ffffff;
+          text-transform: uppercase;
+          will-change: opacity;
+        }
+
+        /* ════ Footer ═══════════════════════════════════════════ */
+        .arc-footer {
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 18px;
+          margin-top: 40px;
+          padding: 0 64px;
+          font-family: "Rajdhani", sans-serif;
+          font-size: 10px;
+          letter-spacing: 0.32em;
+          color: rgba(255,255,255,0.22);
+          text-transform: uppercase;
+        }
+        .arc-dot { color: rgba(255,255,255,0.1); }
+
+        /* ════ Responsive ═══════════════════════════════════════ */
+        @media (max-width: 900px) {
+          .arc-header,
+          .arc-lane-labels,
+          .arc-footer     { padding: 0 28px; }
+          .arc-row         { gap: 36px; padding: 80px 50px 18px 50px; }
+          .arc-fade        { width: 100px; }
+        }
+
+        @media (max-width: 600px) {
+          .arc-header,
+          .arc-lane-labels,
+          .arc-footer     { padding: 0 20px; }
+          .arc-row         { gap: 28px; padding: 72px 36px 16px 36px; }
+          .arc-chip        { padding: 10px 14px 10px 11px; gap: 9px; }
+          .arc-logo        { width: 20px; height: 20px; }
+          .arc-name        { font-size: 8.5px; letter-spacing: 0.1em; }
+          .arc-fade        { width: 68px; }
+          .arc-header-title { font-size: clamp(24px, 7vw, 36px); }
+          .arc-footer      { font-size: 9px; gap: 12px; }
+        }
+      `}</style>
     </section>
   );
 };

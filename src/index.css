@@ -1,32 +1,70 @@
+/* ═══════════════════════════════════════════════════════════
+   FONTS — single source of truth (not loaded again in HTML)
+   ═══════════════════════════════════════════════════════════ */
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&display=swap');
 
 @import "tailwindcss";
 
+/* ═══════════════════════════════════════════════════════════
+   BOX MODEL
+   ═══════════════════════════════════════════════════════════ */
 * {
   box-sizing: border-box;
 }
 
-button,
-a,
-span {
-  cursor: none;
-}
-
+/* ═══════════════════════════════════════════════════════════
+   CUSTOM CURSOR — desktop only
+   ═══════════════════════════════════════════════════════════ */
 body {
   margin: 0;
   overflow-x: hidden;
   background-color: #050505;
   color: #ffffff;
-  /* font-family: 'Space Grotesk', sans-serif; */
-  /* font-family: "Orbitron", sans-serif; */
   font-family: "Rajdhani", sans-serif;
-  cursor: none;
-  /* Hide default cursor */
-  ;
+  /* Custom cursor is injected by SmoothCursor via document.documentElement.style.cursor */
 }
 
+/* On desktop (hover-capable) devices, hide the default cursor
+   so SmoothCursor can display the custom one. */
+@media (hover: hover) and (pointer: fine) {
+  body,
+  button,
+  a,
+  span {
+    cursor: none;
+  }
+}
+
+/* On touch / coarse-pointer devices: always restore system cursor
+   and hide the custom cursor component entirely. */
+@media (hover: none), (pointer: coarse) {
+  body,
+  button,
+  a,
+  span {
+    cursor: auto !important;
+  }
+
+  .custom-cursor-container,
+  .smooth-cursor {
+    display: none !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   FOCUS VISIBILITY — global accessible focus ring
+   ═══════════════════════════════════════════════════════════ */
+:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TYPOGRAPHIC DEFAULTS
+   ═══════════════════════════════════════════════════════════ */
 h1,
 h2,
 h3,
@@ -37,32 +75,9 @@ h6,
   font-family: "Orbitron", sans-serif;
 }
 
-/* Touch devices: restore default */
-@media (hover: none) and (pointer: coarse) {
-  body {
-    cursor: none;
-  }
-
-  .custom-cursor-container {
-    display: none !important;
-  }
-}
-
-.gradient-text {
-  background: linear-gradient(90deg, #38bdf8, #9810FA);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-canvas {
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: -1;
-  outline: none;
-}
-
+/* ═══════════════════════════════════════════════════════════
+   SCROLLBAR
+   ═══════════════════════════════════════════════════════════ */
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -78,6 +93,45 @@ canvas {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #00f3ff;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   LOADER
+   ═══════════════════════════════════════════════════════════ */
+#loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #050505;
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  transition: opacity 1s ease;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CANVAS (Three.js particle background)
+   ═══════════════════════════════════════════════════════════ */
+canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  outline: none;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   UTILITY CLASSES
+   ═══════════════════════════════════════════════════════════ */
+.gradient-text {
+  background: linear-gradient(90deg, #38bdf8, #9810FA);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .portrait-circle {
@@ -112,7 +166,7 @@ canvas {
   pointer-events: auto;
 }
 
-/* --- CUSTOM CURSOR --- */
+/* ─── CUSTOM CURSOR CONTAINER ─── */
 .custom-cursor-container {
   position: fixed;
   top: 0;
@@ -135,7 +189,6 @@ canvas {
   stroke-linejoin: round;
   transition: fill 0.2s ease, transform 0.1s ease;
   filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.8));
-  color: rgb(255 255 255 / var(--tw-text-opacity, 1));
 }
 
 body.hovering .cursor-arrow {
@@ -144,33 +197,146 @@ body.hovering .cursor-arrow {
   filter: drop-shadow(0 0 5px rgba(34, 211, 238, 0.9));
 }
 
-/* Nav styles are now self-contained in Navbar.jsx */
-
-#loader {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: #050505;
-  z-index: 9999;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  transition: opacity 1s ease;
+/* ═══════════════════════════════════════════════════════════
+   HERO BUTTONS
+   Primary (dark background → light button)
+   ═══════════════════════════════════════════════════════════ */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; box-shadow: 0 0 6px rgba(34,197,94,0.5); }
+  50% { opacity: 0.5; box-shadow: 0 0 12px rgba(34,197,94,0.8); }
 }
 
-/* ============================================================
-   SKILLS SECTION — Expanding Containers with Star-Trail Glow
-   ============================================================ */
+@keyframes spin-slow {
+  100% { transform: rotate(360deg); }
+}
 
-/* ============================================================
-   SKILLS SECTION — Expanding Containers with Star-Trail Glow
-   ============================================================ */
+.hero-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 32px;
+  background: #0a0a0a;
+  color: #ffffff;
+  font-family: "Rajdhani", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  border: 2px solid #0a0a0a;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
 
-/* ── SVG orbiting star ring (same technique as hamburger ring) ── */
+.hero-btn-primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  transition: left 0.5s ease;
+}
 
+.hero-btn-primary:hover::before {
+  left: 100%;
+}
+
+.hero-btn-primary:hover {
+  background: #222;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  transform: translateY(-1px);
+}
+
+.hero-btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 32px;
+  background: transparent;
+  color: #0a0a0a;
+  font-family: "Rajdhani", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  border: 2px dashed #ccc;
+  transition: all 0.3s ease;
+}
+
+.hero-btn-outline:hover {
+  border-color: #0a0a0a;
+  border-style: solid;
+  transform: translateY(-1px);
+}
+
+/* ── Inverse variants (for dark sections) ── */
+.hero-btn-primary-inverse {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 32px;
+  background: #ffffff;
+  color: #0a0a0a;
+  font-family: "Rajdhani", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  border: 2px solid #ffffff;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-btn-primary-inverse::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0,0,0,0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.hero-btn-primary-inverse:hover::before {
+  left: 100%;
+}
+
+.hero-btn-primary-inverse:hover {
+  background: #e5e5e5;
+  border-color: #e5e5e5;
+  box-shadow: 0 4px 20px rgba(255,255,255,0.15);
+  transform: translateY(-1px);
+}
+
+.hero-btn-outline-inverse {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 32px;
+  background: transparent;
+  color: #ffffff;
+  font-family: "Rajdhani", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  border: 2px dashed #ccc;
+  transition: all 0.3s ease;
+}
+
+.hero-btn-outline-inverse:hover {
+  border-color: #ffffff;
+  border-style: solid;
+  transform: translateY(-1px);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SKILLS SECTION — Star ring decorations
+   ═══════════════════════════════════════════════════════════ */
 .star-ring-bg {
   stroke: rgba(255, 255, 255, 0.04);
   transition: stroke 0.4s ease;
@@ -187,7 +353,6 @@ body.hovering .cursor-arrow {
   filter: drop-shadow(0 0 6px currentColor);
   animation: star-dash-orbit 8s linear infinite, star-rgb-cycle 6s linear infinite;
   stroke-dasharray: 2.5 97.5;
-  /* 2.5% dash length, exactly filling the 100% pathLength loop */
 }
 
 .skill-container-outer.active .star-ring-dash {
@@ -196,55 +361,20 @@ body.hovering .cursor-arrow {
 }
 
 @keyframes star-dash-orbit {
-  0% {
-    stroke-dashoffset: 0;
-  }
-
-  100% {
-    stroke-dashoffset: -100;
-  }
-
-  /* offset loops through exactly 100% pathLength */
+  0%   { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -100; }
 }
 
 @keyframes star-rgb-cycle {
-  0% {
-    stroke: #ff4444;
-    filter: drop-shadow(0 0 3px #ff4444);
-  }
-
-  16% {
-    stroke: #ff44ff;
-    filter: drop-shadow(0 0 3px #ff44ff);
-  }
-
-  33% {
-    stroke: #4444ff;
-    filter: drop-shadow(0 0 3px #4444ff);
-  }
-
-  50% {
-    stroke: #44ffff;
-    filter: drop-shadow(0 0 3px #44ffff);
-  }
-
-  66% {
-    stroke: #44ff44;
-    filter: drop-shadow(0 0 3px #44ff44);
-  }
-
-  83% {
-    stroke: #ffff44;
-    filter: drop-shadow(0 0 3px #ffff44);
-  }
-
-  100% {
-    stroke: #ff4444;
-    filter: drop-shadow(0 0 3px #ff4444);
-  }
+  0%   { stroke: #ff4444; filter: drop-shadow(0 0 3px #ff4444); }
+  16%  { stroke: #ff44ff; filter: drop-shadow(0 0 3px #ff44ff); }
+  33%  { stroke: #4444ff; filter: drop-shadow(0 0 3px #4444ff); }
+  50%  { stroke: #44ffff; filter: drop-shadow(0 0 3px #44ffff); }
+  66%  { stroke: #44ff44; filter: drop-shadow(0 0 3px #44ff44); }
+  83%  { stroke: #ffff44; filter: drop-shadow(0 0 3px #ffff44); }
+  100% { stroke: #ff4444; filter: drop-shadow(0 0 3px #ff4444); }
 }
 
-/* ── Inner content (sits on top) ── */
 .skill-container-inner {
   background: #0a0a0a;
   border-radius: 1.5rem;
@@ -255,7 +385,6 @@ body.hovering .cursor-arrow {
   background: rgba(10, 10, 10, 0.95);
 }
 
-/* ── Header row (always visible) ── */
 .skill-container-header {
   display: flex;
   align-items: center;
@@ -315,301 +444,12 @@ body.hovering .cursor-arrow {
   color: #22d3ee;
 }
 
-/* ══════════════════════════════════════════════════════════════
-   ELECTROMAGNETIC ACTIVATION CARDS
-   ══════════════════════════════════════════════════════════════ */
-
-/* ── Grid layout ── */
-.em-card-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 14px;
-  flex: 1;
-}
-
-@media (max-width: 500px) {
-  .em-card-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ── Individual card ── */
-.em-card {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 28px 16px 20px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 16px;
-  overflow: hidden;
-  cursor: pointer;
-  transition:
-    border-color 0.5s ease,
-    background 0.5s ease,
-    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-    box-shadow 0.5s ease;
-  animation: em-card-entrance 0.6s ease both;
-  animation-delay: var(--em-delay, 0ms);
-}
-
-@keyframes em-card-entrance {
-  from {
-    opacity: 0;
-    transform: translateY(16px) scale(0.96);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.em-card:hover {
-  border-color: color-mix(in srgb, var(--em-color) 50%, transparent);
-  background: rgba(255, 255, 255, 0.04);
-  transform: translateY(-4px) scale(1.02);
-  box-shadow:
-    0 8px 32px color-mix(in srgb, var(--em-color) 12%, transparent),
-    0 0 0 1px color-mix(in srgb, var(--em-color) 15%, transparent),
-    inset 0 1px 0 color-mix(in srgb, var(--em-color) 10%, transparent);
-}
-
-/* ── PCB circuit traces (SVG decoration) ── */
-.em-card-traces {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.em-trace {
-  stroke: rgba(255, 255, 255, 0.04);
-  stroke-width: 1;
-  transition: stroke 0.6s ease, filter 0.6s ease;
-}
-
-.em-trace-dot {
-  fill: rgba(255, 255, 255, 0.04);
-  transition: fill 0.6s ease, filter 0.6s ease;
-}
-
-.em-card:hover .em-trace {
-  stroke: color-mix(in srgb, var(--em-color) 40%, transparent);
-  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--em-color) 30%, transparent));
-}
-
-.em-card:hover .em-trace-dot {
-  fill: color-mix(in srgb, var(--em-color) 60%, transparent);
-  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--em-color) 50%, transparent));
-}
-
-/* ── Diagonal scan-line sweep ── */
-.em-card-scanline {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  opacity: 0;
-  background: linear-gradient(115deg,
-      transparent 0%,
-      transparent 40%,
-      color-mix(in srgb, var(--em-color) 12%, transparent) 45%,
-      color-mix(in srgb, var(--em-color) 25%, transparent) 50%,
-      color-mix(in srgb, var(--em-color) 12%, transparent) 55%,
-      transparent 60%,
-      transparent 100%);
-  background-size: 300% 100%;
-  background-position: 200% 0;
-  transition: opacity 0.3s ease;
-}
-
-.em-card:hover .em-card-scanline {
-  opacity: 1;
-  animation: em-scanline-sweep 0.8s ease forwards;
-}
-
-@keyframes em-scanline-sweep {
-  0% {
-    background-position: 200% 0;
-  }
-
-  100% {
-    background-position: -100% 0;
-  }
-}
-
-/* ── Volumetric glow behind icon ── */
-.em-card-glow {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  transform: translate(-50%, -60%);
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0;
-  background: radial-gradient(circle,
-      color-mix(in srgb, var(--em-color) 12%, transparent) 0%,
-      color-mix(in srgb, var(--em-color) 4%, transparent) 40%,
-      transparent 70%);
-  filter: blur(8px);
-  transition: opacity 0.5s ease, transform 0.5s ease;
-}
-
-.em-card:hover .em-card-glow {
-  opacity: 1;
-  transform: translate(-50%, -60%) scale(1.3);
-}
-
-/* ── Floating particles ── */
-.em-card-particles {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 3;
-}
-
-.em-card-particles span {
-  position: absolute;
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: var(--em-color);
-  opacity: 0;
-  filter: blur(0.5px);
-}
-
-.em-card:hover .em-card-particles span {
-  animation: em-particle-float 1.2s ease-out forwards;
-}
-
-.em-card-particles span:nth-child(1) {
-  left: 30%;
-  top: 45%;
-  animation-delay: 0.05s;
-}
-
-.em-card-particles span:nth-child(2) {
-  left: 55%;
-  top: 35%;
-  animation-delay: 0.15s;
-}
-
-.em-card-particles span:nth-child(3) {
-  left: 70%;
-  top: 50%;
-  animation-delay: 0.25s;
-}
-
-.em-card-particles span:nth-child(4) {
-  left: 40%;
-  top: 55%;
-  animation-delay: 0.35s;
-}
-
-.em-card-particles span:nth-child(5) {
-  left: 60%;
-  top: 60%;
-  animation-delay: 0.1s;
-}
-
-.em-card-particles span:nth-child(6) {
-  left: 45%;
-  top: 40%;
-  animation-delay: 0.2s;
-}
-
-@keyframes em-particle-float {
-  0% {
-    opacity: 0;
-    transform: translateY(0) scale(1);
-  }
-
-  30% {
-    opacity: 0.9;
-  }
-
-  100% {
-    opacity: 0;
-    transform: translateY(-30px) translateX(8px) scale(0.3);
-  }
-}
-
-/* ── Icon ── */
-.em-card-icon {
-  font-size: 2.4rem;
-  color: #555;
-  position: relative;
-  z-index: 2;
-  transition:
-    color 0.4s ease,
-    text-shadow 0.4s ease,
-    filter 0.4s ease,
-    transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  filter: grayscale(100%) brightness(0.6);
-  margin-bottom: 12px;
-}
-
-.em-card:hover .em-card-icon {
-  color: var(--em-color);
-  filter: grayscale(0%) brightness(1);
-  text-shadow:
-    0 0 8px color-mix(in srgb, var(--em-color) 50%, transparent),
-    0 0 20px color-mix(in srgb, var(--em-color) 20%, transparent);
-  transform: scale(1.1);
-}
-
-/* ── Name ── */
-.em-card-name {
-  font-family: "Orbitron", sans-serif;
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: #555;
-  position: relative;
-  z-index: 2;
-  transition: color 0.4s ease, text-shadow 0.4s ease;
-}
-
-.em-card:hover .em-card-name {
-  color: #ffffff;
-  text-shadow: 0 0 8px color-mix(in srgb, var(--em-color) 30%, transparent);
-}
-
-/* ── Mobile responsive ── */
-@media (max-width: 640px) {
-  .em-card {
-    padding: 22px 12px 16px;
-  }
-
-  .em-card-icon {
-    font-size: 1.8rem;
-  }
-
-  .em-card-name {
-    font-size: 0.6rem;
-  }
-}
-
-/* === ENTRANCE ANIMATIONS === */
+/* ═══════════════════════════════════════════════════════════
+   ENTRANCE ANIMATIONS
+   ═══════════════════════════════════════════════════════════ */
 @keyframes fade-in-up {
-  0% {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  0%   { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 .animate-fade-in-up {
@@ -617,88 +457,13 @@ body.hovering .cursor-arrow {
 }
 
 @keyframes fade-in-scale {
-  0% {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
+  0%   { opacity: 0; transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1); }
 }
 
 .animate-fade-in-scale {
   animation: fade-in-scale 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-.delay-100 {
-  animation-delay: 100ms;
-}
-
-.delay-300 {
-  animation-delay: 300ms;
-}
-
-/* === HERO BUTTON INVERSE STYLES (for DARK BACKGROUNDS) === */
-.hero-btn-primary-inverse {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 14px 32px;
-  background: #ffffff;
-  color: #0a0a0a;
-  font-family: "Rajdhani", sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  border: 2px solid #ffffff;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.hero-btn-primary-inverse::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.1), transparent);
-  transition: left 0.5s ease;
-}
-
-.hero-btn-primary-inverse:hover::before {
-  left: 100%;
-}
-
-.hero-btn-primary-inverse:hover {
-  background: #e5e5e5;
-  border-color: #e5e5e5;
-  box-shadow: 0 4px 20px rgba(255, 255, 255, 0.15);
-  transform: translateY(-1px);
-}
-
-.hero-btn-outline-inverse {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 14px 32px;
-  background: transparent;
-  color: #ffffff;
-  font-family: "Rajdhani", sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  border: 2px dashed #ccc;
-  transition: all 0.3s ease;
-}
-
-.hero-btn-outline-inverse:hover {
-  border-color: #ffffff;
-  border-style: solid;
-  transform: translateY(-1px);
-}
+.delay-100 { animation-delay: 100ms; }
+.delay-300 { animation-delay: 300ms; }

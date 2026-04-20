@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ExternalLink, Github } from 'lucide-react';
 
 const PROJECTS = [
@@ -157,33 +157,31 @@ const ProjectCard = ({ project, index }) => {
 
 const Projects = () => {
     const containerRef = useRef(null);
-    const [scrollProgress, setScrollProgress] = useState(0);
+    // Direct DOM ref — avoids setState/re-renders on every scroll tick
+    const spineProgressRef = useRef(null);
 
     // Track scroll position to fill the timeline spine
     useEffect(() => {
-        let ticking = false;
+        let rafId = null;
         const handleScroll = () => {
-            if(!ticking) {
-                requestAnimationFrame(() => {
-                    if (!containerRef.current) return;
-                    const rect = containerRef.current.getBoundingClientRect();
-                    const windowHeight = window.innerHeight;
-
-                    const start = windowHeight / 2;
-                    const end = rect.height;
-                    const current = start - rect.top;
-
-                    const progress = Math.max(0, Math.min(1, current / end));
-                    setScrollProgress(progress);
-                    ticking = false;
-                });
-                ticking = true;
-            }
+            if (rafId !== null) return;
+            rafId = requestAnimationFrame(() => {
+                rafId = null;
+                if (!containerRef.current || !spineProgressRef.current) return;
+                const rect = containerRef.current.getBoundingClientRect();
+                const windowHeight = window.innerHeight;
+                const current = windowHeight / 2 - rect.top;
+                const progress = Math.max(0, Math.min(1, current / rect.height));
+                spineProgressRef.current.style.height = `${progress * 100}%`;
+            });
         };
 
-        window.addEventListener('scroll', handleScroll, {passive: true});
-        handleScroll(); // Calculate initial progress
-        return () => window.removeEventListener('scroll', handleScroll);
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        handleScroll();
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+            if (rafId !== null) cancelAnimationFrame(rafId);
+        };
     }, []);
 
     return (
@@ -199,12 +197,13 @@ const Projects = () => {
 
                 <div className="relative" ref={containerRef}>
                     {/* Background Timeline Spine */}
-                    <div className="absolute left-[15px] md:left-[calc(50%-1px)] top-0 bottom-0 w-0.5 bg-[rgba(24,24,27,0.5)]" />
+                    <div className="absolute left-3.75 md:left-[calc(50%-1px)] top-0 bottom-0 w-0.5 bg-[rgba(24,24,27,0.5)]" />
 
                     {/* Animated Scroll Progress Spine */}
                     <div
-                        className="absolute left-[15px] md:left-[calc(50%-1px)] top-0 w-0.5 bg-zinc-100 will-change-height"
-                        style={{ height: `${scrollProgress * 100}%` }}
+                        ref={spineProgressRef}
+                        className="absolute left-3.75 md:left-[calc(50%-1px)] top-0 w-0.5 bg-zinc-100"
+                        style={{ height: '0%', willChange: 'height' }}
                     />
 
                     {/* Project Items */}

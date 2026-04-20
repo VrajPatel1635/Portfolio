@@ -1,9 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import * as THREE from 'three';
-import gsap from 'gsap';
-import ScrollTrigger from 'gsap/ScrollTrigger';
+import React, { Suspense, lazy } from 'react';
 import './index.css';
-import Partical_BG from './components/Partical_BG'
 import Cursor from './components/Cursor'
 import Navbar from "./components/Navbar";
 import Hero from './components/Hero';
@@ -15,15 +11,18 @@ import Loader from './components/Loader';
 import Scroll_Indicator from './components/Scroll_Indicator'
 import SmoothCursor from './components/SmoothCursor'
 
-gsap.registerPlugin(ScrollTrigger);
+// Lazy-load the heavy Three.js particle background so it doesn't
+// block the main JS bundle / first paint.
+const Partical_BG = lazy(() => import('./components/Partical_BG'));
 
 const App = () => {
   return (
     <>
-      <Partical_BG/>
+      <Suspense fallback={null}>
+        <Partical_BG />
+      </Suspense>
       <SmoothCursor/>
       <Loader/>
-
 
       <Navbar/>
       <Scroll_Indicator/>
