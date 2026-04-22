@@ -28,7 +28,7 @@ const PROJECTS = [
         features: [ "Secure user authentication with JWT", "Real-time movie/TV discovery and search via TMDB", "Personal watchlist with status tracking and favorites", "AI chatbot recommendations with TMDB-assisted context" ],
         demoLink: "https://watchwise-xi.vercel.app/",
         repoLink: "https://github.com/VrajPatel1635/WatchWise",
-        image: "/images/projects/WatchWise.png"
+        image: "/images/projects/watchwise.png"
     },
     {
         id: "03", 
@@ -38,7 +38,7 @@ const PROJECTS = [
         features: [ "AI-based attendance from classroom photos (InsightFace embeddings)", "Role-based access for Admin, Teacher, and Principal", "Bulk student upload via Excel + ZIP photo upload", "Monthly attendance report export to Excel (.xlsx)" ], 
         demoLink: "https://markme-ai-online.vercel.app", 
         repoLink: "https://github.com/vedantx001/SIH-MarkME",
-        image: "/images/projects/MarkME.png"
+        image: "/images/projects/markme.png"
     }
 ];
 
