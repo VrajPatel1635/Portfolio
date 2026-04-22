@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import '../index.css';
+import '../styles/index.css';
+import '../styles/hero.css';
 
 const Hero = () => {
   // useRef instead of useState — mouse position is only needed by
@@ -188,7 +189,7 @@ const Hero = () => {
                   visible: { scaleX: 1, opacity: 1, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } }
               }}
               style={{ transformOrigin: "left" }}
-              className="my-7 w-[60px] h-[2px] bg-[#0a0a0a]"
+              className="my-7 w-15 h-0.5 bg-[#0a0a0a]"
             />
 
             {/* Description */}

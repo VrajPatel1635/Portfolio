@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import './index.css';
+import './styles/index.css';
 import Cursor from './components/Cursor'
 import Navbar from "./components/Navbar";
 import Hero from './components/Hero';

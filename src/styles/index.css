@@ -1,0 +1,141 @@
+/* ═══════════════════════════════════════════════════════════
+   FONTS — single source of truth (not loaded again in HTML)
+   ═══════════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&display=swap');
+
+@import "tailwindcss";
+
+/* ═══════════════════════════════════════════════════════════
+   BOX MODEL
+   ═══════════════════════════════════════════════════════════ */
+* {
+  box-sizing: border-box;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CUSTOM CURSOR — desktop only
+   ═══════════════════════════════════════════════════════════ */
+body {
+  margin: 0;
+  overflow-x: hidden;
+  background-color: #050505;
+  color: #ffffff;
+  font-family: "Rajdhani", sans-serif;
+  /* Custom cursor is injected by SmoothCursor via document.documentElement.style.cursor */
+}
+
+/* On desktop (hover-capable) devices, hide the default cursor
+   so SmoothCursor can display the custom one. */
+@media (hover: hover) and (pointer: fine) {
+  body,
+  button,
+  a,
+  span {
+    cursor: none;
+  }
+}
+
+/* On touch / coarse-pointer devices: always restore system cursor
+   and hide the custom cursor component entirely. */
+@media (hover: none), (pointer: coarse) {
+  body,
+  button,
+  a,
+  span {
+    cursor: auto !important;
+  }
+
+  .custom-cursor-container,
+  .smooth-cursor {
+    display: none !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   FOCUS VISIBILITY — global accessible focus ring
+   ═══════════════════════════════════════════════════════════ */
+:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TYPOGRAPHIC DEFAULTS
+   ═══════════════════════════════════════════════════════════ */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.orbitron-title {
+  font-family: "Orbitron", sans-serif;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SCROLLBAR
+   ═══════════════════════════════════════════════════════════ */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #050505;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #00f3ff;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   LOADER
+   ═══════════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════════
+   CANVAS (Three.js particle background)
+   ═══════════════════════════════════════════════════════════ */
+canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  outline: none;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   UTILITY CLASSES
+   ═══════════════════════════════════════════════════════════ */
+
+
+
+/* ═══════════════════════════════════════════════════════════
+   ENTRANCE ANIMATIONS
+   ═══════════════════════════════════════════════════════════ */
+@keyframes fade-in-up {
+  0%   { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 1s ease-out forwards;
+}
+
+@keyframes fade-in-scale {
+  0%   { opacity: 0; transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.animate-fade-in-scale {
+  animation: fade-in-scale 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.delay-100 { animation-delay: 100ms; }
+.delay-300 { animation-delay: 300ms; }

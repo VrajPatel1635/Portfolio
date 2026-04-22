@@ -1,0 +1,109 @@
+/* ═══════════════════════════════════════════════════════════
+   SKILLS SECTION — Star ring decorations
+   ═══════════════════════════════════════════════════════════ */
+.star-ring-bg {
+  stroke: rgba(255, 255, 255, 0.04);
+  transition: stroke 0.4s ease;
+}
+
+.skill-container-outer.active .star-ring-bg {
+  stroke: rgba(255, 255, 255, 0.08);
+}
+
+.star-ring-dash {
+  stroke: rgba(255, 255, 255, 0.15);
+  opacity: 0;
+  transition: opacity 0.4s ease, stroke 0.3s ease;
+  filter: drop-shadow(0 0 6px currentColor);
+  animation: star-dash-orbit 8s linear infinite, star-rgb-cycle 6s linear infinite;
+  stroke-dasharray: 2.5 97.5;
+}
+
+.skill-container-outer.active .star-ring-dash {
+  opacity: 1;
+  stroke: #ffffff;
+}
+
+@keyframes star-dash-orbit {
+  0%   { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -100; }
+}
+
+@keyframes star-rgb-cycle {
+  0%   { stroke: #ff4444; filter: drop-shadow(0 0 3px #ff4444); }
+  16%  { stroke: #ff44ff; filter: drop-shadow(0 0 3px #ff44ff); }
+  33%  { stroke: #4444ff; filter: drop-shadow(0 0 3px #4444ff); }
+  50%  { stroke: #44ffff; filter: drop-shadow(0 0 3px #44ffff); }
+  66%  { stroke: #44ff44; filter: drop-shadow(0 0 3px #44ff44); }
+  83%  { stroke: #ffff44; filter: drop-shadow(0 0 3px #ffff44); }
+  100% { stroke: #ff4444; filter: drop-shadow(0 0 3px #ff4444); }
+}
+
+.skill-container-inner {
+  background: #0a0a0a;
+  border-radius: 1.5rem;
+  transition: background 0.4s ease;
+}
+
+.skill-container-outer.active .skill-container-inner {
+  background: rgba(10, 10, 10, 0.95);
+}
+
+.skill-container-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.skill-container-tag {
+  font-family: "Orbitron", sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.15em;
+  transition: color 0.3s ease;
+}
+
+.skill-container-outer.active .skill-container-tag {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.skill-container-title {
+  font-family: "Orbitron", sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #aaaaaa;
+  transition: color 0.3s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.skill-container-outer.active .skill-container-title {
+  color: #ffffff;
+}
+
+.skill-container-line {
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.06);
+  transition: background 0.3s ease;
+}
+
+.skill-container-outer.active .skill-container-line {
+  background: rgba(34, 211, 238, 0.15);
+}
+
+.skill-container-chevron {
+  width: 18px;
+  height: 18px;
+  color: #555;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s ease;
+}
+
+.skill-container-outer.active .skill-container-chevron {
+  transform: rotate(180deg);
+  color: #22d3ee;
+}

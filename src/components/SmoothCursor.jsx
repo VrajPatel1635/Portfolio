@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react"
 import { motion, useSpring } from "framer-motion"
+import '../styles/cursor.css';
 
 const isTouchOrCoarsePointerDevice = () => {
   if (typeof window === "undefined") return true

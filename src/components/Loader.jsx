@@ -1,5 +1,6 @@
 // src/components/Loader.jsx
 import React, { useState, useEffect } from 'react';
+import '../styles/loader.css';
 
 const Loader = () => {
   const [percent, setPercent] = useState(0);

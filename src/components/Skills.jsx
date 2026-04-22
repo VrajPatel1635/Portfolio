@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import Matter from "matter-js";
+import '../styles/skills.css';
 
 const SKILLS = [
     { name: "React",       color: "#61DAFB", slug: "react"            },
