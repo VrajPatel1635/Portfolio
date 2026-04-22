@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef } from 'react';
+import { motion, useScroll, useTransform, useMotionTemplate } from 'framer-motion';
 import { ExternalLink, Github } from 'lucide-react';
 
 const PROJECTS = [
@@ -16,7 +17,7 @@ const PROJECTS = [
         ],
         demoLink: "https://cine-master-flame.vercel.app/",
         repoLink: "https://github.com/VrajPatel1635/CineMaster",
-        image: "/images/projects/cinema.png"
+        image: "/images/projects/Cinemaster.png"
     },
     {
         id: "02", 
@@ -27,7 +28,7 @@ const PROJECTS = [
         features: [ "Secure user authentication with JWT", "Real-time movie/TV discovery and search via TMDB", "Personal watchlist with status tracking and favorites", "AI chatbot recommendations with TMDB-assisted context" ],
         demoLink: "https://watchwise-xi.vercel.app/",
         repoLink: "https://github.com/VrajPatel1635/WatchWise",
-        image: "/images/projects/watchwise.png"
+        image: "/images/projects/WatchWise.png"
     },
     {
         id: "03", 
@@ -37,181 +38,182 @@ const PROJECTS = [
         features: [ "AI-based attendance from classroom photos (InsightFace embeddings)", "Role-based access for Admin, Teacher, and Principal", "Bulk student upload via Excel + ZIP photo upload", "Monthly attendance report export to Excel (.xlsx)" ], 
         demoLink: "https://markme-ai-online.vercel.app", 
         repoLink: "https://github.com/vedantx001/SIH-MarkME",
-        image: "/images/projects/markme.png"
+        image: "/images/projects/MarkME.png"
     }
 ];
 
-const ProjectCard = ({ project, index }) => {
-    const cardRef = useRef(null);
-    const [isVisible, setIsVisible] = useState(false);
-    const isEven = index % 2 === 0;
+// Reusable text component for both Left side (animated) and Right side (mobile static)
+const ProjectDetails = ({ project, className = "" }) => (
+    <div className={`flex flex-col justify-center ${className}`}>
+        <div className="flex items-center gap-4 mb-4">
+            <span className="font-mono text-sm text-zinc-500 tracking-wider">PROJECT {project.id}</span>
+            <div className="h-px w-12 bg-zinc-800" />
+        </div>
+        
+        <h3 className="text-4xl md:text-5xl lg:text-7xl font-black tracking-tighter text-zinc-100 mb-2 leading-none">
+            {project.title}
+        </h3>
+        
+        <p className="text-xl text-zinc-400 font-medium mb-6 mt-2">
+            {project.subtitle}
+        </p>
 
-    useEffect(() => {
-        const observer = new IntersectionObserver(
-            ([entry]) => {
-                if (entry.isIntersecting) {
-                    setIsVisible(true);
-                }
-            },
-            { threshold: 0.2 }
-        );
+        <p className="text-zinc-400 mb-8 leading-relaxed text-base md:text-lg max-w-xl">
+            {project.description}
+        </p>
 
-        if (cardRef.current) observer.observe(cardRef.current);
-        return () => observer.disconnect();
-    }, []);
+        <div className="flex flex-wrap gap-2 md:gap-3 mb-10">
+            {project.tags.map((tag, i) => (
+                <span
+                    key={i}
+                    className="text-xs font-mono uppercase tracking-wider border border-zinc-700/50 px-3 py-1.5 md:px-4 md:py-2 rounded-full text-zinc-300 bg-black/30 backdrop-blur-md"
+                >
+                    {tag}
+                </span>
+            ))}
+        </div>
+
+        <div className="flex items-center gap-4 mt-auto">
+            <a
+                href={project.demoLink}
+                target="_blank" rel="noopener noreferrer"
+                className="hero-btn-primary-inverse group"
+            >
+                <span>VIEW PROJECT</span>
+                <ExternalLink size={16} className="transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1" />
+            </a>
+            <a
+                href={project.repoLink}
+                target="_blank" rel="noopener noreferrer"
+                className="hero-btn-outline-inverse group"
+            >
+                <span>SOURCE CODE</span>
+                <Github size={16} />
+            </a>
+        </div>
+    </div>
+);
+
+const RightImage = ({ project }) => {
+    const ref = useRef(null);
+    const { scrollYProgress } = useScroll({
+        target: ref,
+        offset: ["start end", "end start"]
+    });
+    
+    // Parallax effect for the image inside its container
+    // When the container enters bottom of screen (0), image is translated up.
+    // When it leaves the top (1), image is translated down.
+    const y = useTransform(scrollYProgress, [0, 1], ["-15%", "15%"]);
 
     return (
-        <div
-            ref={cardRef}
-            className={`relative flex flex-col md:flex-row items-center w-full mb-24 md:mb-40 transition-all duration-1000 ease-out
-                ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-24'}`}
-        >
-            {/* Timeline Node Dot */}
-            <div className={`absolute left-1.5 md:left-[calc(50%-10px)] top-8 md:top-1/2 w-5 h-5 rounded-full border-4 z-10 md:-translate-y-1/2 transition-colors duration-700 delay-300
-                ${isVisible ? 'bg-zinc-100 border-zinc-950' : 'bg-[rgba(9,9,11,0.5)] border-zinc-950'}`}
-            />
-
-            {/* Content Container (Alternates left/right on desktop) */}
-            <div className={`w-full flex flex-col ${isEven ? 'md:flex-row' : 'md:flex-row-reverse'} pl-12 md:pl-0`}>
-
-                {/* Image Section */}
-                <div className={`w-full md:w-1/2 ${isEven ? 'md:pr-16' : 'md:pl-16'}`}>
-                    <div className="w-full aspect-video bg-[rgba(24,24,27,0.5)] border border-zinc-800 rounded-lg relative overflow-hidden group mb-8 md:mb-0 backdrop-blur-sm">
-                        {project.image ? (
-                            <img 
-                                src={project.image} 
-                                alt={project.title} 
-                                className="w-full h-full object-cover opacity-80 transition-transform duration-700 group-hover:scale-105"
-                            />
-                        ) : (
-                            <div className="absolute inset-0 flex items-center justify-center text-zinc-800 font-mono text-9xl font-black opacity-20 select-none transition-transform duration-700 group-hover:scale-110">
-                                {project.id}
-                            </div>
-                        )}
-                        <div className="absolute inset-0 bg-zinc-900/40 group-hover:bg-transparent transition-colors duration-500" />
-                    </div>
+        <div ref={ref} className="w-full aspect-video rounded-3xl overflow-hidden relative shadow-2xl border border-zinc-800 group bg-[rgba(15,15,18,0.8)] backdrop-blur-sm">
+            {project.image ? (
+                <motion.img 
+                    style={{ y, willChange: "transform" }}
+                    src={project.image}
+                    className="w-full h-full object-cover absolute top-0 left-0 opacity-60 group-hover:opacity-100 transition-opacity duration-700"
+                    alt={project.title}
+                />
+            ) : (
+                <div className="absolute inset-0 flex items-center justify-center text-zinc-800 font-mono text-9xl font-black opacity-20 select-none">
+                    {project.id}
                 </div>
-
-                {/* Text Section */}
-                <div className={`w-full md:w-1/2 flex flex-col justify-center ${isEven ? 'md:pl-16' : 'md:pr-16 md:items-end md:text-right'}`}>
-                    <div className={`flex items-center gap-4 mb-4 ${!isEven && 'md:flex-row-reverse'}`}>
-                        <span className="font-mono text-sm text-zinc-500">{project.id}</span>
-                        <h3 className="text-3xl md:text-4xl font-bold tracking-tight text-zinc-100">
-                            {project.title}
-                        </h3>
-                    </div>
-
-                    <p className="text-xl text-zinc-400 mb-6 font-medium">
-                        {project.subtitle}
-                    </p>
-
-                    <p className="text-zinc-400 mb-8 leading-relaxed max-w-xl">
-                        {project.description}
-                    </p>
-
-                    <div className="mb-8 w-full">
-                        <ul className={`flex flex-col gap-3 ${!isEven && 'md:items-end'}`}>
-                            {project.features.map((feature, i) => (
-                                <li key={i} className={`flex items-center gap-3 text-sm text-zinc-400 ${!isEven ? 'md:flex-row-reverse' : ''}`}>
-                                    <div className="w-1.5 h-1.5 rounded-full bg-zinc-700 shrink-0" />
-                                    {feature}
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-
-                    <div className={`flex flex-wrap gap-3 mb-10 ${!isEven && 'md:justify-end'}`}>
-                        {project.tags.map((tag, i) => (
-                            <span
-                                key={i}
-                                className="text-xs font-mono uppercase tracking-wider border border-zinc-800 px-3 py-1.5 rounded-full text-zinc-400 backdrop-blur-sm bg-black/20"
-                            >
-                                {tag}
-                            </span>
-                        ))}
-                    </div>
-
-                    <div className={`flex items-center gap-4 ${!isEven && 'md:flex-row-reverse'} pointer-events-auto mt-4`}>
-                        <a
-                            href={project.demoLink}
-                            target="_blank" rel="noopener noreferrer"
-                            className="hero-btn-primary-inverse group"
-                        >
-                            <span>VIEW PROJECT</span>
-                            <ExternalLink size={16} className="transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1" />
-                        </a>
-                        <a
-                            href={project.repoLink}
-                            target="_blank" rel="noopener noreferrer"
-                            className="hero-btn-outline-inverse group"
-                        >
-                            <span>SOURCE CODE</span>
-                            <Github size={16} />
-                        </a>
-                    </div>
-                </div>
-            </div>
+            )}
+            
+            {/* Inner vignette for premium blend */}
+            <div className="absolute inset-0 shadow-[inset_0_0_80px_rgba(0,0,0,0.8)] pointer-events-none transition-opacity duration-700 group-hover:opacity-50" />
+            <div className="absolute inset-0 bg-zinc-900/20 group-hover:bg-transparent transition-colors duration-500 pointer-events-none" />
         </div>
     );
 };
 
 const Projects = () => {
     const containerRef = useRef(null);
-    // Direct DOM ref — avoids setState/re-renders on every scroll tick
-    const spineProgressRef = useRef(null);
-
-    // Track scroll position to fill the timeline spine
-    useEffect(() => {
-        let rafId = null;
-        const handleScroll = () => {
-            if (rafId !== null) return;
-            rafId = requestAnimationFrame(() => {
-                rafId = null;
-                if (!containerRef.current || !spineProgressRef.current) return;
-                const rect = containerRef.current.getBoundingClientRect();
-                const windowHeight = window.innerHeight;
-                const current = windowHeight / 2 - rect.top;
-                const progress = Math.max(0, Math.min(1, current / rect.height));
-                spineProgressRef.current.style.height = `${progress * 100}%`;
-            });
-        };
-
-        window.addEventListener('scroll', handleScroll, { passive: true });
-        handleScroll();
-        return () => {
-            window.removeEventListener('scroll', handleScroll);
-            if (rafId !== null) cancelAnimationFrame(rafId);
-        };
-    }, []);
+    
+    // Track scroll over the entire container to trigger text swaps
+    const { scrollYProgress } = useScroll({
+        target: containerRef,
+        offset: ["start start", "end end"]
+    });
 
     return (
-        <section id="work" className="py-24 md:py-32 px-6 md:px-12 lg:px-24 bg-transparent text-zinc-50 min-h-screen">
-            <div className="max-w-7xl mx-auto">
+        <section id="work" className="bg-transparent text-zinc-50 relative z-10 py-12 md:py-0">
+            <div ref={containerRef} className="max-w-350 mx-auto w-full flex flex-col md:flex-row relative px-6 md:px-12 lg:px-24">
+                
+                {/* 
+                    LEFT SIDE: Pinned Details (Desktop Only) 
+                    It stays sticky while the right side natively scrolls.
+                */}
+                <div className="hidden md:flex w-1/2 sticky top-0 h-screen items-center justify-start pr-16 pointer-events-none">
+                    
+                    {/* Background Massive Watermark */}
+                    <motion.div 
+                        initial={{ opacity: 0, x: -150 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+                        viewport={{ once: false, amount: 0.1 }}
+                        className="absolute -left-12 top-1/2 -translate-y-1/2 text-zinc-800/10 font-black text-[12rem] uppercase z-0 tracking-tighter select-none -rotate-90 origin-center"
+                    >
+                        Works
+                    </motion.div>
 
-                <div className="flex flex-col gap-4 mb-24 md:mb-40">
-                    <h2 className="text-4xl md:text-6xl font-black tracking-tight uppercase text-zinc-100">
-                        Selected Works
-                    </h2>
-                    <div className="w-24 h-1 bg-zinc-800" />
+                    {PROJECTS.map((project, index) => {
+                        const step = 1 / (PROJECTS.length - 1);
+                        const target = index * step;
+                        
+                        // Tight Opacity crossfade for a snappy transition
+                        const opacity = useTransform(
+                            scrollYProgress, 
+                            [target - 0.15, target, target + 0.15], 
+                            [0, 1, 0]
+                        );
+                        // Smash scale: Drops from large (1.5) to normal (1), then crushed back (0.8)
+                        const scale = useTransform(
+                            scrollYProgress, 
+                            [target - 0.15, target, target + 0.15], 
+                            [1.4, 1, 0.8]
+                        );
+                        // Hard drop: Drops in heavily from above, then gets pushed slightly down
+                        const y = useTransform(
+                            scrollYProgress, 
+                            [target - 0.15, target, target + 0.15], 
+                            ["-60px", "0px", "20px"]
+                        );
+                        
+                        // Only enable interactions when fully visible
+                        const pointerEvents = useTransform(
+                            scrollYProgress, 
+                            (p) => Math.abs(p - target) < 0.1 ? "auto" : "none"
+                        );
+
+                        return (
+                            <motion.div 
+                                key={project.id}
+                                style={{ opacity, y, scale, pointerEvents, willChange: "transform, opacity" }}
+                                className="absolute left-0 w-full flex items-center h-full z-10 origin-center"
+                            >
+                                <ProjectDetails project={project} className="w-full" />
+                            </motion.div>
+                        );
+                    })}
                 </div>
 
-                <div className="relative" ref={containerRef}>
-                    {/* Background Timeline Spine */}
-                    <div className="absolute left-3.75 md:left-[calc(50%-1px)] top-0 bottom-0 w-0.5 bg-[rgba(24,24,27,0.5)]" />
-
-                    {/* Animated Scroll Progress Spine */}
-                    <div
-                        ref={spineProgressRef}
-                        className="absolute left-3.75 md:left-[calc(50%-1px)] top-0 w-0.5 bg-zinc-100"
-                        style={{ height: '0%', willChange: 'height' }}
-                    />
-
-                    {/* Project Items */}
-                    <div className="relative z-10">
-                        {PROJECTS.map((project, index) => (
-                            <ProjectCard key={project.id} project={project} index={index} />
-                        ))}
-                    </div>
+                {/* 
+                    RIGHT SIDE: Scrolling Images 
+                    Scrolls natively with the window for absolutely zero lag.
+                */}
+                <div className="w-full md:w-1/2 flex flex-col relative z-20">
+                    {PROJECTS.map((project) => (
+                        <div key={project.id} className="min-h-screen flex flex-col justify-center py-12 md:py-0">
+                            <RightImage project={project} />
+                            
+                            {/* Mobile Text (Visible only on small screens) */}
+                            <div className="md:hidden mt-12 w-full">
+                                <ProjectDetails project={project} />
+                            </div>
+                        </div>
+                    ))}
                 </div>
 
             </div>

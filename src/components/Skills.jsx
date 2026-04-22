@@ -1,524 +1,275 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
+import Matter from "matter-js";
 
-// ─── Logo URL via Simple Icons CDN ───────────────────────────────
-// Some slugs use overrides due to Simple Icons removals/renames
-// no global overrides needed — slugs fixed directly in data
-const logoUrl = (slug, color) =>
-  `https://cdn.simpleicons.org/${slug}/${color.replace("#", "")}`;
-
-// ─── Skills Data ──────────────────────────────────────────────────
-const LANES = [
-  {
-    id: "frontend",
-    label: "FRONTEND",
-    num: "01",
-    direction: "left",
-    duration: 40,
-    skills: [
-      { name: "React",       color: "#61DAFB", slug: "react"            },
-      { name: "Next.js",    color: "#FFFFFF", slug: "nextdotjs"         },
-      { name: "JavaScript", color: "#F7DF1E", slug: "javascript"        },
-      { name: "Tailwind",   color: "#06B6D4", slug: "tailwindcss"       },
-      { name: "HTML5",      color: "#E34F26", slug: "html5"             },
-      { name: "CSS3",       color: "#1572B6", slug: "css"               },
-    ],
-  },
-  {
-    id: "backend",
-    label: "BACKEND",
-    num: "02",
-    direction: "right",
-    duration: 48,
-    skills: [
-      { name: "Node.js",    color: "#339933", slug: "nodedotjs"         },
-      { name: "Express.js", color: "#FFFFFF", slug: "express"           },
-      { name: "MongoDB",    color: "#47A248", slug: "mongodb"           },
-      { name: "MySQL",      color: "#4479A1", slug: "mysql"             },
-      { name: "JWT Auth",   color: "#FB015B", slug: "jsonwebtokens"     },
-      { name: "REST API",   color: "#85EA2D", slug: "swagger"           },
-    ],
-  },
-  {
-    id: "tools",
-    label: "TOOLS",
-    num: "03",
-    direction: "left",
-    duration: 36,
-    skills: [
-      { name: "Git",        color: "#F05032", slug: "git"               },
-      { name: "GitHub",     color: "#FFFFFF", slug: "github"            },
-      { name: "VS Code",    color: "#007ACC", slug: "vscodium"          },
-      { name: "Postman",    color: "#FF6C37", slug: "postman"           },
-      { name: "Python",     color: "#3776AB", slug: "python"            },
-      { name: "Java",       color: "#ED8B00", slug: "openjdk"           },
-    ],
-  },
+const SKILLS = [
+    { name: "React",       color: "#61DAFB", slug: "react"            },
+    { name: "Next.js",     color: "#FFFFFF", slug: "nextdotjs"        },
+    { name: "JavaScript",  color: "#F7DF1E", slug: "javascript"       },
+    { name: "Tailwind",    color: "#06B6D4", slug: "tailwindcss"      },
+    { name: "HTML5",       color: "#E34F26", slug: "html5"            },
+    { name: "CSS3",        color: "#1572B6", slug: "css"              },
+    { name: "Node.js",     color: "#339933", slug: "nodedotjs"        },
+    { name: "Express.js",  color: "#FFFFFF", slug: "express"          },
+    { name: "MongoDB",     color: "#47A248", slug: "mongodb"          },
+    { name: "MySQL",       color: "#4479A1", slug: "mysql"            },
+    { name: "JWT Auth",    color: "#FB015B", slug: "jsonwebtokens"    },
+    { name: "REST API",    color: "#85EA2D", slug: "swagger"          },
+    { name: "Git",         color: "#F05032", slug: "git"              },
+    { name: "GitHub",      color: "#FFFFFF", slug: "github"           },
+    { name: "Python",      color: "#3776AB", slug: "python"           },
 ];
 
-// ─── Arc Lane ────────────────────────────────────────────────────
-const ArcLane = ({ lane, containerRef }) => {
-  const chipRefs = useRef([]);
-  // duplicate 2× for seamless infinite loop
-  const chips = [...lane.skills, ...lane.skills];
-
-  useEffect(() => {
-    let rafId;
-
-    const tick = () => {
-      const container = containerRef.current;
-      if (!container) {
-        rafId = requestAnimationFrame(tick);
-        return;
-      }
-
-      const cr  = container.getBoundingClientRect();
-      const cx  = cr.left + cr.width / 2;
-      const hw  = cr.width / 2;
-
-      chipRefs.current.forEach((el) => {
-        if (!el) return;
-
-        const r = el.getBoundingClientRect();
-
-        // hide chips outside visible section
-        if (r.right < cr.left - 80 || r.left > cr.right + 80) {
-          el.style.opacity = "0";
-          return;
-        }
-
-        const chipCx = r.left + r.width / 2;
-        const dist   = Math.min(Math.abs(chipCx - cx) / hw, 1);
-
-        // ── Arc transforms ──
-        const ty = -(Math.pow(dist, 1.5) * 70);
-        const sc = 1 - dist * 0.46;
-        const op = Math.max(0.06, 1 - dist * 0.63);
-
-        el.style.transform = `translateY(${ty}px) scale(${sc})`;
-        el.style.opacity   = op;
-
-        // ── Color intensity (brand color ↔ grayscale) ──
-        const ci = Math.max(0, 1 - dist * 3.0); // 1 at center, 0 beyond dist≈0.33
-        const logo = el.querySelector(".arc-logo");
-        const name = el.querySelector(".arc-name");
-        if (logo) {
-          const gs = 1 - ci;
-          const br = 0.35 + 0.65 * ci;
-          logo.style.filter = `grayscale(${gs.toFixed(2)}) brightness(${br.toFixed(2)})`;
-        }
-        if (name) {
-          name.style.opacity = (0.25 + 0.75 * ci).toFixed(2);
-        }
-
-        // ── Glow (simple — to be refined later) ──
-        const colHex = el.dataset.color || "#ffffff";
-        const rr = parseInt(colHex.slice(1, 3), 16);
-        const gg = parseInt(colHex.slice(3, 5), 16);
-        const bb = parseInt(colHex.slice(5, 7), 16);
-
-        if (ci > 0.04) {
-          el.style.borderColor = `rgba(${rr},${gg},${bb},${(ci * 0.8).toFixed(2)})`;
-          el.style.boxShadow   =
-            `0 0 20px rgba(${rr},${gg},${bb},${(ci * 0.4).toFixed(2)}), ` +
-            `0 0 50px rgba(${rr},${gg},${bb},${(ci * 0.14).toFixed(2)})`;
-        } else {
-          el.style.borderColor = "rgba(255,255,255,0.08)";
-          el.style.boxShadow   = "none";
-        }
-      });
-
-      rafId = requestAnimationFrame(tick);
-    };
-
-    rafId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafId);
-  }, []);
-
-  return (
-    <div className="arc-lane-wrapper">
-      {/* left/right dark fade overlays */}
-      <div className="arc-fade arc-fade--left"  />
-      <div className="arc-fade arc-fade--right" />
-
-      {/* scrolling row */}
-      <div
-        className={`arc-row arc-row--${lane.direction}`}
-        style={{ animationDuration: `${lane.duration}s` }}
-      >
-        {chips.map((skill, i) => (
-          <div
-            key={i}
-            ref={(el) => (chipRefs.current[i] = el)}
-            className="arc-chip"
-            data-color={skill.color}
-          >
-            <img
-              className="arc-logo"
-              src={logoUrl(skill.slug, skill.color)}
-              alt={skill.name}
-              draggable={false}
-            />
-            <span className="arc-name">{skill.name}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-// ─── Main Skills Section ──────────────────────────────────────────
 const Skills = () => {
-  const containerRef = useRef(null);
+    const sceneRef = useRef(null);
+    const bubbleRefs = useRef([]);
+    const [isMobile, setIsMobile] = useState(false);
 
-  return (
-    <section id="skills" className="arc-section">
+    useEffect(() => {
+        setIsMobile(window.innerWidth < 768);
+        const handleResize = () => setIsMobile(window.innerWidth < 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
-      {/* Watermark */}
-      <div className="arc-watermark" aria-hidden="true">SKILLS</div>
+    const pointerRef = useRef({ x: -1000, y: -1000 });
 
-      {/* Crosshair markers */}
-      <span className="arc-cross" style={{ top: "10%",  left:  "5%" }}>+</span>
-      <span className="arc-cross" style={{ bottom: "12%", right: "6%" }}>+</span>
+    useEffect(() => {
+        if (!sceneRef.current) return;
 
-      {/* Inner container — used as the center reference for arc math */}
-      <div className="arc-inner" ref={containerRef}>
+        const Engine = Matter.Engine,
+              Runner = Matter.Runner,
+              Bodies = Matter.Bodies,
+              Composite = Matter.Composite,
+              Mouse = Matter.Mouse,
+              MouseConstraint = Matter.MouseConstraint,
+              Events = Matter.Events;
 
-        {/* ── Section Header ── */}
-        <motion.div
-          className="arc-header"
-          initial={{ opacity: 0, y: 28 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-        >
-          <div className="arc-header-eyebrow">
-            <span className="arc-header-rule" />
-            <span className="arc-header-sub">Architecture &amp; Tech</span>
-          </div>
-          <h2 className="arc-header-title">
-            TECHNOLOGY <span className="arc-title-stroke">STACK.</span>
-          </h2>
-        </motion.div>
+        const engine = Engine.create({
+            gravity: { x: 0, y: 0, scale: 0.001 } // Zero gravity
+        });
 
-        {/* ── Lane Labels row ── */}
-        <motion.div
-          className="arc-lane-labels"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-        >
-          {LANES.map((lane) => (
-            <div key={lane.id} className="arc-lane-meta">
-              <span className="arc-lane-num">{lane.num}</span>
-              <span className="arc-lane-lbl">{lane.label}</span>
-            </div>
-          ))}
-        </motion.div>
+        const width = sceneRef.current.clientWidth;
+        const height = sceneRef.current.clientHeight;
+        const wallThickness = 100;
 
-        {/* ── Arc Lanes ── */}
-        <motion.div
-          className="arc-lanes"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 1.2, delay: 0.3 }}
-        >
-          {LANES.map((lane) => (
-            <ArcLane key={lane.id} lane={lane} containerRef={containerRef} />
-          ))}
-        </motion.div>
+        // Boundaries to keep bubbles inside the screen
+        const walls = [
+            Bodies.rectangle(width / 2, -wallThickness/2, width, wallThickness, { isStatic: true }), // Top
+            Bodies.rectangle(width / 2, height + wallThickness/2, width, wallThickness, { isStatic: true }), // Bottom
+            Bodies.rectangle(-wallThickness/2, height / 2, wallThickness, height, { isStatic: true }), // Left
+            Bodies.rectangle(width + wallThickness/2, height / 2, wallThickness, height, { isStatic: true }) // Right
+        ];
 
-        {/* ── Footer metadata ── */}
-        <motion.div
-          className="arc-footer"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8, delay: 0.5 }}
-        >
-          <span>16 TECHNOLOGIES</span>
-          <span className="arc-dot">·</span>
-          <span>CONSTANTLY EVOLVING</span>
-          <span className="arc-dot">·</span>
-          <span>MERN STACK CORE</span>
-        </motion.div>
+        const bubbleRadius = isMobile ? 40 : 65; 
+        
+        const skillBodies = SKILLS.map((skill, index) => {
+            const x = Math.random() * (width - bubbleRadius * 2) + bubbleRadius;
+            const y = Math.random() * (height - bubbleRadius * 2) + bubbleRadius;
+            
+            return Bodies.circle(x, y, bubbleRadius, {
+                restitution: 0.8, // Bounciness
+                friction: 0.001,
+                frictionAir: 0.015, // Air resistance
+                density: 0.04,
+                label: `skill-${index}`
+            });
+        });
 
-      </div>
+        Composite.add(engine.world, [...walls, ...skillBodies]);
 
-      {/* ── Styles ── */}
-      <style>{`
+        // Native DOM Pointer Events for Dragging & Repulsion
+        const handlePointerMove = (e) => {
+            const rect = sceneRef.current.getBoundingClientRect();
+            pointerRef.current.x = e.clientX - rect.left;
+            pointerRef.current.y = e.clientY - rect.top;
+        };
 
-        /* ════ Section ══════════════════════════════════════════ */
-        .arc-section {
-          position: relative;
-          min-height: 100vh;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          overflow: hidden;
-          padding: 80px 0;
-          background: rgba(5, 5, 5, 0.15);
-          backdrop-filter: blur(2px);
-        }
+        const handlePointerDown = (e) => {
+            pointerRef.current.isDown = true;
+            const rect = sceneRef.current.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Find which body was clicked
+            const clickedBodies = Matter.Query.point(skillBodies, { x, y });
+            if (clickedBodies.length > 0) {
+                const body = clickedBodies[0];
+                body.isDragging = true;
+                pointerRef.current.dragBody = body;
+            }
+        };
 
-        .arc-watermark {
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          font-family: "Orbitron", sans-serif;
-          font-size: clamp(80px, 15vw, 210px);
-          font-weight: 900;
-          color: transparent;
-          -webkit-text-stroke: 1px rgba(255,255,255,0.035);
-          white-space: nowrap;
-          pointer-events: none;
-          user-select: none;
-          z-index: 0;
-          letter-spacing: 0.05em;
-        }
+        const handlePointerUp = () => {
+            pointerRef.current.isDown = false;
+            if (pointerRef.current.dragBody) {
+                pointerRef.current.dragBody.isDragging = false;
+                pointerRef.current.dragBody = null;
+            }
+        };
 
-        .arc-cross {
-          position: absolute;
-          font-size: 18px;
-          font-weight: 300;
-          color: rgba(255,255,255,0.18);
-          font-family: monospace;
-          pointer-events: none;
-          user-select: none;
-          z-index: 1;
-        }
+        sceneRef.current.addEventListener('pointermove', handlePointerMove);
+        sceneRef.current.addEventListener('pointerdown', handlePointerDown);
+        window.addEventListener('pointerup', handlePointerUp);
 
-        /* ════ Inner ════════════════════════════════════════════ */
-        .arc-inner {
-          position: relative;
-          z-index: 2;
-          width: 100%;
-          max-width: 1400px;
-          margin: 0 auto;
-        }
+        // Custom Physics Loop (Repulsion and Continuous Movement)
+        Events.on(engine, 'beforeUpdate', () => {
+            // Magnetic repulsion
+            const { x, y, isDown } = pointerRef.current;
+            
+            skillBodies.forEach(body => {
+                // Keep them moving slightly
+                if (body.speed < 0.2 && !body.isDragging) {
+                    Matter.Body.applyForce(body, body.position, {
+                        x: (Math.random() - 0.5) * 0.005,
+                        y: (Math.random() - 0.5) * 0.005
+                    });
+                }
+                
+                // Only repel if not actively clicking/dragging
+                if (!isDown && x > -500) {
+                    const dx = body.position.x - x;
+                    const dy = body.position.y - y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < 200) {
+                        const forceMagnitude = 0.0003 * (200 - distance);
+                        Matter.Body.applyForce(body, body.position, {
+                            x: (dx / distance) * forceMagnitude,
+                            y: (dy / distance) * forceMagnitude
+                        });
+                    }
+                }
+            });
 
-        /* ════ Header ═══════════════════════════════════════════ */
-        .arc-header {
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-          margin-bottom: 36px;
-          padding: 0 64px;
-        }
+            // Handle Manual Dragging Constraint
+            if (isDown && pointerRef.current.dragBody) {
+                const body = pointerRef.current.dragBody;
+                
+                // Calculate velocity to move body towards cursor
+                const dx = x - body.position.x;
+                const dy = y - body.position.y;
+                
+                // Apply velocity directly for snappy drag
+                Matter.Body.setVelocity(body, {
+                    x: dx * 0.2,
+                    y: dy * 0.2
+                });
+            }
+        });
 
-        .arc-header-eyebrow {
-          display: flex;
-          align-items: center;
-          gap: 16px;
-        }
+        // Sync React UI with Physics coordinates at 60fps WITHOUT triggering React re-renders
+        Events.on(engine, 'afterUpdate', () => {
+            skillBodies.forEach((body, i) => {
+                const el = bubbleRefs.current[i];
+                if (el) {
+                    // Update div position and rotation
+                    el.style.transform = `translate(${body.position.x - bubbleRadius}px, ${body.position.y - bubbleRadius}px) rotate(${body.angle}rad)`;
+                    
+                    // Counter-rotate the image so the logo stays perfectly upright
+                    const img = el.querySelector('.skill-logo');
+                    if (img) {
+                        img.style.transform = `rotate(-${body.angle}rad)`;
+                    }
+                }
+            });
+        });
 
-        .arc-header-rule {
-          display: block;
-          width: 48px;
-          height: 1px;
-          background: rgba(255,255,255,0.3);
-          flex-shrink: 0;
-        }
+        const runner = Runner.create();
+        Runner.run(runner, engine);
 
-        .arc-header-sub {
-          font-family: "Rajdhani", sans-serif;
-          font-size: 10px;
-          letter-spacing: 0.4em;
-          color: rgba(255,255,255,0.5);
-          text-transform: uppercase;
-        }
+        return () => {
+            if (sceneRef.current) {
+                sceneRef.current.removeEventListener('pointermove', handlePointerMove);
+                sceneRef.current.removeEventListener('pointerdown', handlePointerDown);
+            }
+            window.removeEventListener('pointerup', handlePointerUp);
+            Runner.stop(runner);
+            Matter.World.clear(engine.world);
+            Engine.clear(engine);
+        };
+    }, [isMobile]); 
 
-        .arc-header-title {
-          font-family: "Orbitron", sans-serif;
-          font-size: clamp(28px, 4.5vw, 56px);
-          font-weight: 800;
-          color: #ffffff;
-          letter-spacing: -0.02em;
-          line-height: 1.05;
-          margin: 0;
-          text-transform: uppercase;
-        }
+    const bubbleRadius = isMobile ? 40 : 65;
+    const bubbleSize = bubbleRadius * 2;
 
-        .arc-title-stroke {
-          color: transparent;
-          -webkit-text-stroke: 2px #ffffff;
-        }
+    return (
+        <section id="skills" className="relative h-screen w-full flex items-center justify-center py-20 overflow-hidden z-10 bg-transparent" style={{ touchAction: 'pan-y' }}>
+            {/* Massive Background Watermark */}
+            <motion.div 
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 1.1 }}
+                transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[15vw] md:text-[20vw] font-black tracking-tighter uppercase text-zinc-800/10 select-none z-0 pointer-events-none"
+            >
+                SKILLS
+            </motion.div>
 
-        /* ════ Lane labels row ══════════════════════════════════ */
-        .arc-lane-labels {
-          display: flex;
-          flex-direction: column;
-          gap: 0;
-          padding: 0 64px;
-          margin-bottom: 4px;
-        }
+            {/* Header / Intro */}
+            <motion.div
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -50 }}
+                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                className="absolute top-12 md:top-24 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 z-20 pointer-events-none"
+            >
+                <div className="flex items-center gap-4">
+                    <div className="h-px w-12 bg-zinc-600" />
+                    <span className="font-mono text-xs tracking-[0.3em] text-zinc-400 uppercase">Interactive</span>
+                    <div className="h-px w-12 bg-zinc-600" />
+                </div>
+                <h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter orbitron-title text-center whitespace-nowrap">
+                    TECH <span className="text-transparent" style={{ WebkitTextStroke: '1px white' }}>STACK</span>
+                </h2>
+                <p className="text-zinc-400 text-xs md:text-sm tracking-widest font-light mt-2 uppercase text-center w-full">Play with the spheres</p>
+            </motion.div>
 
-        .arc-lane-meta {
-          display: flex;
-          align-items: baseline;
-          gap: 10px;
-          padding: 10px 0 0 0;
-          border-top: 1px solid rgba(255,255,255,0.05);
-        }
-        .arc-lane-meta:first-child { border-top: none; }
+            {/* Physics Scene Wrapper for Animations */}
+            <motion.div
+                initial={{ opacity: 0, y: 100 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 100 }}
+                transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
+                className="absolute top-0 left-0 w-full h-full z-10"
+            >
+                <div 
+                    ref={sceneRef} 
+                    className="absolute top-0 left-0 w-full h-full z-10 overflow-hidden select-none"
+                >
+                    {SKILLS.map((skill, index) => (
+                        <div
+                            key={skill.slug}
+                            ref={(el) => (bubbleRefs.current[index] = el)}
+                            className="absolute top-0 left-0 flex flex-col items-center justify-center rounded-full bg-[rgba(20,20,22,0.6)] border border-zinc-600/30 backdrop-blur-lg shadow-[inset_0_4px_20px_rgba(255,255,255,0.1),0_10px_30px_rgba(0,0,0,0.5)] cursor-grab active:cursor-grabbing hover:bg-[rgba(30,30,35,0.8)] hover:border-zinc-400/50 transition-colors duration-300 group"
+                            style={{
+                                width: `${bubbleSize}px`,
+                                height: `${bubbleSize}px`,
+                                willChange: 'transform' // Hardware acceleration
+                            }}
+                        >
+                            {/* 3D Glass Highlight */}
+                            <div className="absolute top-[10%] left-[20%] w-[30%] h-[20%] bg-white opacity-20 rounded-full blur-[2px] pointer-events-none" />
 
-        .arc-lane-num {
-          font-family: "Rajdhani", sans-serif;
-          font-size: 9px;
-          letter-spacing: 0.18em;
-          color: rgba(255,255,255,0.2);
-        }
+                            {/* Skill Logo (Counter-rotated dynamically) */}
+                            <img 
+                                src={`https://cdn.simpleicons.org/${skill.slug}/${skill.color.replace("#", "")}`} 
+                                alt={skill.name}
+                                draggable={false}
+                                className="skill-logo w-8 h-8 md:w-12 md:h-12 opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300 pointer-events-none"
+                                style={{ filter: "drop-shadow(0 0 10px rgba(255,255,255,0.2))" }}
+                            />
 
-        .arc-lane-lbl {
-          font-family: "Orbitron", sans-serif;
-          font-size: 9px;
-          letter-spacing: 0.22em;
-          color: rgba(255,255,255,0.28);
-          text-transform: uppercase;
-        }
-
-        /* ════ Lanes ════════════════════════════════════════════ */
-        .arc-lanes {
-          display: flex;
-          flex-direction: column;
-          gap: 0;
-        }
-
-        /* ════ Single lane wrapper ══════════════════════════════ */
-        .arc-lane-wrapper {
-          position: relative;
-          overflow: hidden; /* clips horizontal overflow */
-        }
-
-        /* dark gradient fade — left & right edges */
-        .arc-fade {
-          position: absolute;
-          top: 0;
-          height: 100%;
-          width: 200px;
-          z-index: 10;
-          pointer-events: none;
-        }
-        .arc-fade--left  {
-          left: 0;
-          background: linear-gradient(to right, #050505 0%, rgba(5,5,5,0.7) 60%, transparent 100%);
-        }
-        .arc-fade--right {
-          right: 0;
-          background: linear-gradient(to left, #050505 0%, rgba(5,5,5,0.7) 60%, transparent 100%);
-        }
-
-        /* ════ Scrolling row ════════════════════════════════════ */
-        .arc-row {
-          display: flex;
-          align-items: flex-end; /* chips baseline at bottom — arc pushes edges UP */
-          gap: 52px;
-          width: max-content;
-          /* top padding ≥ max arc upward travel (70px) + some buffer */
-          padding: 92px 100px 22px 100px;
-          will-change: transform;
-        }
-
-        .arc-row--left {
-          animation-name: arc-scroll-left;
-          animation-timing-function: linear;
-          animation-iteration-count: infinite;
-        }
-        .arc-row--right {
-          animation-name: arc-scroll-right;
-          animation-timing-function: linear;
-          animation-iteration-count: infinite;
-        }
-
-        @keyframes arc-scroll-left {
-          from { transform: translateX(0);    }
-          to   { transform: translateX(-50%); }
-        }
-        @keyframes arc-scroll-right {
-          from { transform: translateX(-50%); }
-          to   { transform: translateX(0);    }
-        }
-
-        /* ════ Chip ═════════════════════════════════════════════ */
-        .arc-chip {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 13px 20px 13px 15px;
-          border-radius: 40px;
-          border: 1px solid rgba(255,255,255,0.08);
-          background: rgba(255,255,255,0.03);
-          white-space: nowrap;
-          flex-shrink: 0;
-          cursor: default;
-          user-select: none;
-          transform-origin: center bottom;
-          will-change: transform, opacity;
-        }
-
-        .arc-logo {
-          width: 26px;
-          height: 26px;
-          object-fit: contain;
-          flex-shrink: 0;
-          display: block;
-          will-change: filter;
-          pointer-events: none;
-        }
-
-        .arc-name {
-          font-family: "Orbitron", sans-serif;
-          font-size: 10.5px;
-          font-weight: 600;
-          letter-spacing: 0.15em;
-          color: #ffffff;
-          text-transform: uppercase;
-          will-change: opacity;
-        }
-
-        /* ════ Footer ═══════════════════════════════════════════ */
-        .arc-footer {
-          display: flex;
-          align-items: center;
-          flex-wrap: wrap;
-          gap: 18px;
-          margin-top: 40px;
-          padding: 0 64px;
-          font-family: "Rajdhani", sans-serif;
-          font-size: 10px;
-          letter-spacing: 0.32em;
-          color: rgba(255,255,255,0.22);
-          text-transform: uppercase;
-        }
-        .arc-dot { color: rgba(255,255,255,0.1); }
-
-        /* ════ Responsive ═══════════════════════════════════════ */
-        @media (max-width: 900px) {
-          .arc-header,
-          .arc-lane-labels,
-          .arc-footer     { padding: 0 28px; }
-          .arc-row         { gap: 36px; padding: 80px 50px 18px 50px; }
-          .arc-fade        { width: 100px; }
-        }
-
-        @media (max-width: 600px) {
-          .arc-header,
-          .arc-lane-labels,
-          .arc-footer     { padding: 0 20px; }
-          .arc-row         { gap: 28px; padding: 72px 36px 16px 36px; }
-          .arc-chip        { padding: 10px 14px 10px 11px; gap: 9px; }
-          .arc-logo        { width: 20px; height: 20px; }
-          .arc-name        { font-size: 8.5px; letter-spacing: 0.1em; }
-          .arc-fade        { width: 68px; }
-          .arc-header-title { font-size: clamp(24px, 7vw, 36px); }
-          .arc-footer      { font-size: 9px; gap: 12px; }
-        }
-      `}</style>
-    </section>
-  );
+                            {/* Hidden skill name that shows on hover */}
+                            <div className="absolute -bottom-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-mono text-[10px] md:text-xs font-bold tracking-widest text-white whitespace-nowrap bg-black/80 px-3 py-1 rounded-full border border-zinc-700 pointer-events-none">
+                                {skill.name}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </motion.div>
+        </section>
+    );
 };
 
 export default Skills;

@@ -1,16 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
 import '../index.css';
 
 const Hero = () => {
-  const [isMounted, setIsMounted] = useState(false);
   // useRef instead of useState — mouse position is only needed by
   // SmoothCursor (which has its own listener). Storing it in state
   // was causing a re-render on every mousemove with no visible effect.
   const mousePosRef = useRef({ x: 0, y: 0 });
-  const scrollBadgeRef = useRef(null);
 
   useEffect(() => {
-    setIsMounted(true);
     const handleMouseMove = (e) => {
       mousePosRef.current = {
         x: (e.clientX / window.innerWidth - 0.5) * 2,
@@ -47,6 +45,27 @@ const Hero = () => {
     }
   }
 
+  // Staggering variants for the left column
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.15,
+        delayChildren: 0.2,
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 40 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] }
+    }
+  };
+
   return (
     // id="home" added so the Navbar #home anchor resolves correctly
     <section
@@ -59,7 +78,11 @@ const Hero = () => {
       <div className="absolute bottom-0 left-0 w-full h-px" style={{ background: '#e5e5e5' }} />
 
       {/* Large "01" watermark */}
-      <div
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        whileInView={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 1.5, ease: "easeOut" }}
+        viewport={{ once: false, amount: 0.1 }}
         className="absolute top-1/2 -translate-y-1/2 pointer-events-none select-none"
         aria-hidden="true"
         style={{
@@ -69,12 +92,10 @@ const Hero = () => {
           fontWeight: 900,
           color: '#f5f5f5',
           lineHeight: 1,
-          opacity: isMounted ? 1 : 0,
-          transition: 'opacity 1.5s ease 0.2s',
         }}
       >
         01
-      </div>
+      </motion.div>
 
       {/* "+" Crosshair markers */}
       {[
@@ -83,8 +104,12 @@ const Hero = () => {
         { bottom: '15%', left: '48%' },
         { bottom: '8%', right: '12%' },
       ].map((pos, i) => (
-        <div
+        <motion.div
           key={i}
+          initial={{ opacity: 0, scale: 0 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1, ease: "easeOut", delay: i * 0.1 }}
+          viewport={{ once: false, amount: 0.1 }}
           className="absolute pointer-events-none select-none"
           aria-hidden="true"
           style={{
@@ -93,16 +118,18 @@ const Hero = () => {
             fontSize: '18px',
             fontWeight: 300,
             fontFamily: 'monospace',
-            opacity: isMounted ? 1 : 0,
-            transition: `opacity 1s ease ${0.8 + i * 0.15}s`,
           }}
         >
           +
-        </div>
+        </motion.div>
       ))}
 
       {/* Dot grid background (right side) */}
-      <svg
+      <motion.svg
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 0.6 }}
+        transition={{ duration: 1.2, ease: "easeOut", delay: 0.4 }}
+        viewport={{ once: false, amount: 0.1 }}
         className="absolute pointer-events-none select-none"
         aria-hidden="true"
         style={{
@@ -110,28 +137,25 @@ const Hero = () => {
           top: '15%',
           width: '224px',
           height: '336px',
-          opacity: isMounted ? 0.6 : 0,
-          transition: 'opacity 1.2s ease 0.6s',
         }}
       >
         {dotGrid}
-      </svg>
+      </motion.svg>
 
       {/* ===== MAIN CONTENT ===== */}
       <div className="relative z-20 w-full max-w-350 mx-auto px-6 md:px-12 lg:px-20 py-20 md:py-0">
         <div className="flex flex-col lg:flex-row items-start lg:items-center gap-12 lg:gap-8">
 
           {/* ── LEFT COLUMN ── */}
-          <div className="flex-1 lg:max-w-[55%]">
-
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: false, amount: 0.2 }}
+            className="flex-1 lg:max-w-[55%]"
+          >
             {/* Giant Name */}
-            <div
-              style={{
-                opacity: isMounted ? 1 : 0,
-                transform: isMounted ? 'translateY(0) scale(1)' : 'translateY(30px) scale(0.95)',
-                transition: 'opacity 1s cubic-bezier(0.16,1,0.3,1) 0.4s, transform 1s cubic-bezier(0.16,1,0.3,1) 0.4s',
-              }}
-            >
+            <motion.div variants={itemVariants}>
               <h1
                 className="leading-[0.85] font-black uppercase tracking-tighter"
                 style={{
@@ -155,44 +179,34 @@ const Hero = () => {
               >
                 PATEL
               </h1>
-            </div>
+            </motion.div>
 
             {/* Divider line */}
-            <div
-              className="my-7"
-              style={{
-                width: '60px',
-                height: '2px',
-                background: '#0a0a0a',
-                opacity: isMounted ? 1 : 0,
-                transform: isMounted ? 'scaleX(1)' : 'scaleX(0)',
-                transformOrigin: 'left',
-                transition: 'opacity 0.8s ease 0.7s, transform 0.8s ease 0.7s',
+            <motion.div
+              variants={{
+                  hidden: { scaleX: 0, opacity: 0 },
+                  visible: { scaleX: 1, opacity: 1, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } }
               }}
+              style={{ transformOrigin: "left" }}
+              className="my-7 w-[60px] h-[2px] bg-[#0a0a0a]"
             />
 
             {/* Description */}
-            <p
+            <motion.p
+              variants={itemVariants}
               className="text-base md:text-lg leading-relaxed max-w-md mb-9 font-medium"
               style={{
                 color: '#888',
                 fontFamily: '"Rajdhani", sans-serif',
-                opacity: isMounted ? 1 : 0,
-                transform: isMounted ? 'translateY(0)' : 'translateY(15px)',
-                transition: 'opacity 0.8s ease 0.8s, transform 0.8s ease 0.8s',
               }}
             >
               Engineering student building modern web applications — focused on the MERN stack, AI exploration, and real-world problem solving.
-            </p>
+            </motion.p>
 
             {/* Buttons */}
-            <div
+            <motion.div
+              variants={itemVariants}
               className="flex items-center gap-4 pointer-events-auto"
-              style={{
-                opacity: isMounted ? 1 : 0,
-                transform: isMounted ? 'translateY(0)' : 'translateY(15px)',
-                transition: 'opacity 0.8s ease 0.9s, transform 0.8s ease 0.9s',
-              }}
             >
               <button
                 onClick={scrollToProjects}
@@ -209,17 +223,16 @@ const Hero = () => {
               >
                 LET'S TALK
               </button>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
           {/* ── RIGHT COLUMN ── */}
-          <div
+          <motion.div
+            initial={{ opacity: 0, x: 100, rotate: 5 }}
+            whileInView={{ opacity: 1, x: 0, rotate: 0 }}
+            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.3 }}
+            viewport={{ once: false, amount: 0.2 }}
             className="flex-1 lg:max-w-[42%] w-full"
-            style={{
-              opacity: isMounted ? 1 : 0,
-              transform: isMounted ? 'translateY(0) translateX(0)' : 'translateY(25px) translateX(15px)',
-              transition: 'opacity 1s ease 0.6s, transform 1s ease 0.6s',
-            }}
           >
             {/* Code editor card */}
             <div
@@ -265,17 +278,17 @@ const Hero = () => {
                 ))}
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
 
       {/* ===== ROTATING SCROLL BADGE ===== */}
-      <div
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: "easeOut", delay: 0.8 }}
+        viewport={{ once: false, amount: 0.1 }}
         className="absolute bottom-8 right-8 md:bottom-12 md:right-12 pointer-events-auto z-30"
-        style={{
-          opacity: isMounted ? 1 : 0,
-          transition: 'opacity 0.8s ease 1.2s',
-        }}
       >
         <div
           onClick={() => {
@@ -327,7 +340,7 @@ const Hero = () => {
             <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 13.5L12 21m0 0l-7.5-7.5M12 21V3" />
           </svg>
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 };

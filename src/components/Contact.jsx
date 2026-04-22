@@ -1,49 +1,8 @@
-import React, { useRef, useEffect, useState } from 'react';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-
-gsap.registerPlugin(ScrollTrigger);
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 
 const Contact = () => {
-    const sectionRef = useRef(null);
-    const lineRef = useRef(null);
     const [copied, setCopied] = useState(false);
-
-    useEffect(() => {
-        const ctx = gsap.context(() => {
-            const tl = gsap.timeline({
-                scrollTrigger: {
-                    trigger: sectionRef.current,
-                    start: "top 75%",
-                    toggleActions: "play none none reverse",
-                }
-            });
-
-            tl.from(".contact-word", {
-                yPercent: 120,
-                opacity: 0,
-                duration: 1.2,
-                stagger: 0.1,
-                ease: "power4.out"
-            })
-            .from(lineRef.current, {
-                scaleX: 0,
-                duration: 1.2,
-                ease: "power3.inOut",
-                transformOrigin: "left center"
-            }, "-=0.8")
-            .from(".contact-bottom-item", {
-                y: 30,
-                opacity: 0,
-                duration: 0.8,
-                stagger: 0.15,
-                ease: "power3.out"
-            }, "-=0.8");
-
-        }, sectionRef);
-
-        return () => ctx.revert();
-    }, []);
 
     const copyEmail = () => {
         navigator.clipboard.writeText('vrajrpatel6261@gmail.com');
@@ -51,9 +10,50 @@ const Contact = () => {
         setTimeout(() => setCopied(false), 2000);
     };
 
+    // Framer Motion Variants
+    const containerVariants = {
+        hidden: { opacity: 1 }, // keep opacity 1 to allow children to hide
+        visible: {
+            opacity: 1,
+            transition: {
+                staggerChildren: 0.1,
+                delayChildren: 0.1
+            }
+        }
+    };
+
+    const wordVariants = {
+        hidden: { y: "120%", opacity: 0 },
+        visible: { 
+            y: "0%", 
+            opacity: 1, 
+            transition: { duration: 1, ease: [0.16, 1, 0.3, 1] } 
+        }
+    };
+
+    const lineVariants = {
+        hidden: { scaleX: 0 },
+        visible: { 
+            scaleX: 1, 
+            transition: { duration: 1.2, ease: [0.16, 1, 0.3, 1] } 
+        }
+    };
+
+    const bottomItemVariants = {
+        hidden: { y: 40, opacity: 0 },
+        visible: { 
+            y: 0, 
+            opacity: 1, 
+            transition: { duration: 0.8, ease: "easeOut" } 
+        }
+    };
+
     return (
-        <section
-            ref={sectionRef}
+        <motion.section
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: false, amount: 0.2 }}
             id="contact"
             className="min-h-screen py-20 px-6 md:px-12 lg:px-24 flex flex-col justify-center relative overflow-hidden text-white"
         >
@@ -67,14 +67,14 @@ const Contact = () => {
                     <div className="tracking-tighter leading-[0.85] orbitron-title font-bold uppercase">
                         <div className="overflow-hidden py-1">
                             <h2 className="text-[13vw] md:text-[9vw] lg:text-[7.5vw] flex flex-wrap gap-x-3 md:gap-x-6">
-                                <span className="inline-block contact-word">LET'S</span>
-                                <span className="inline-block contact-word">BUILD</span>
+                                <motion.span variants={wordVariants} className="inline-block">LET'S</motion.span>
+                                <motion.span variants={wordVariants} className="inline-block">BUILD</motion.span>
                             </h2>
                         </div>
                         <div className="overflow-hidden py-1 text-transparent group hover:text-white transition-colors duration-700" style={{ WebkitTextStroke: '1px rgba(255,255,255,0.7)' }}>
                             <h2 className="text-[13vw] md:text-[9vw] lg:text-[7.5vw] flex flex-wrap gap-x-3 md:gap-x-6">
-                                <span className="inline-block contact-word">SOMETHING</span>
-                                <span className="inline-block contact-word">EPIC.</span>
+                                <motion.span variants={wordVariants} className="inline-block">SOMETHING</motion.span>
+                                <motion.span variants={wordVariants} className="inline-block">EPIC.</motion.span>
                             </h2>
                         </div>
                     </div>
@@ -83,12 +83,16 @@ const Contact = () => {
                 {/* Footer / Connect Section */}
                 <div className="mt-auto">
                     {/* Divider Line */}
-                    <div ref={lineRef} className="w-full h-px bg-white/20 mb-12"></div>
+                    <motion.div 
+                        variants={lineVariants}
+                        style={{ transformOrigin: "left center" }}
+                        className="w-full h-px bg-white/20 mb-12"
+                    ></motion.div>
                     
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-16 md:gap-8">
                         
                         {/* Email CTA */}
-                        <div className="group relative contact-bottom-item">
+                        <motion.div variants={bottomItemVariants} className="group relative">
                             <p className="text-gray-400 text-xs md:text-sm tracking-[0.2em] font-light uppercase mb-4 flex items-center gap-3">
                                 <span className="relative flex h-2 w-2">
                                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
@@ -107,10 +111,10 @@ const Contact = () => {
                             </button>
                             {/* Hover Underline */}
                             <div className="absolute -bottom-4 left-0 w-0 h-px bg-white transition-all duration-500 group-hover:w-full"></div>
-                        </div>
+                        </motion.div>
 
                         {/* Social Links & Info */}
-                        <div className="flex flex-wrap gap-12 lg:gap-20 contact-bottom-item">
+                        <motion.div variants={bottomItemVariants} className="flex flex-wrap gap-12 lg:gap-20">
                             <div className="flex flex-col gap-4">
                                 <p className="text-gray-400 text-xs tracking-[0.2em] uppercase font-light">Socials</p>
                                 <div className="flex flex-col gap-4">
@@ -126,21 +130,21 @@ const Contact = () => {
                                     </a>
                                 </div>
                             </div>
-                        </div>
+                        </motion.div>
                     </div>
                     
                     {/* Copyright row */}
-                    <div className="mt-16 sm:mt-24 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-xs text-gray-400 font-light tracking-widest uppercase contact-bottom-item">
+                    <motion.div variants={bottomItemVariants} className="mt-16 sm:mt-24 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-xs text-gray-400 font-light tracking-widest uppercase">
                         <p>© {new Date().getFullYear()} <span className="text-white font-bold">Vraj Patel</span>. All Rights Reserved.</p>
                         <button onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})} className="hover-trigger hover:text-white transition-colors duration-300 uppercase tracking-widest flex items-center gap-2">
                             Back to top
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
                         </button>
-                    </div>
+                    </motion.div>
                 </div>
             </div>
             
-        </section>
+        </motion.section>
     );
 };
 
