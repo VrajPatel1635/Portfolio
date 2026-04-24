@@ -1,33 +1,17 @@
 import React, { useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { motion } from 'framer-motion'; // eslint-disable-line no-unused-vars
 import Matter from "matter-js";
+import { SKILLS } from '../constants/data';
 import '../styles/skills.css';
-
-const SKILLS = [
-    { name: "React",       color: "#61DAFB", slug: "react"            },
-    { name: "Next.js",     color: "#FFFFFF", slug: "nextdotjs"        },
-    { name: "JavaScript",  color: "#F7DF1E", slug: "javascript"       },
-    { name: "Tailwind",    color: "#06B6D4", slug: "tailwindcss"      },
-    { name: "HTML5",       color: "#E34F26", slug: "html5"            },
-    { name: "CSS3",        color: "#1572B6", slug: "css"              },
-    { name: "Node.js",     color: "#339933", slug: "nodedotjs"        },
-    { name: "Express.js",  color: "#FFFFFF", slug: "express"          },
-    { name: "MongoDB",     color: "#47A248", slug: "mongodb"          },
-    { name: "MySQL",       color: "#4479A1", slug: "mysql"            },
-    { name: "JWT Auth",    color: "#FB015B", slug: "jsonwebtokens"    },
-    { name: "REST API",    color: "#85EA2D", slug: "swagger"          },
-    { name: "Git",         color: "#F05032", slug: "git"              },
-    { name: "GitHub",      color: "#FFFFFF", slug: "github"           },
-    { name: "Python",      color: "#3776AB", slug: "python"           },
-];
 
 const Skills = () => {
     const sceneRef = useRef(null);
     const bubbleRefs = useRef([]);
-    const [isMobile, setIsMobile] = useState(false);
+    const [isMobile, setIsMobile] = useState(
+        typeof window !== 'undefined' ? window.innerWidth < 768 : false
+    );
 
     useEffect(() => {
-        setIsMobile(window.innerWidth < 768);
         const handleResize = () => setIsMobile(window.innerWidth < 768);
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
@@ -36,7 +20,8 @@ const Skills = () => {
     const pointerRef = useRef({ x: -1000, y: -1000 });
 
     useEffect(() => {
-        if (!sceneRef.current) return;
+        const sceneEl = sceneRef.current;
+        if (!sceneEl) return;
 
         const Engine = Matter.Engine,
               Runner = Matter.Runner,
@@ -50,8 +35,8 @@ const Skills = () => {
             gravity: { x: 0, y: 0, scale: 0.001 } // Zero gravity
         });
 
-        const width = sceneRef.current.clientWidth;
-        const height = sceneRef.current.clientHeight;
+        const width = sceneEl.clientWidth;
+        const height = sceneEl.clientHeight;
         const wallThickness = 100;
 
         // Boundaries to keep bubbles inside the screen
@@ -64,31 +49,41 @@ const Skills = () => {
 
         const bubbleRadius = isMobile ? 40 : 65; 
         
+        // BIG BANG: start all skills at the center
         const skillBodies = SKILLS.map((skill, index) => {
-            const x = Math.random() * (width - bubbleRadius * 2) + bubbleRadius;
-            const y = Math.random() * (height - bubbleRadius * 2) + bubbleRadius;
+            const x = width / 2 + (Math.random() - 0.5) * 10;
+            const y = height / 2 + (Math.random() - 0.5) * 10;
             
-            return Bodies.circle(x, y, bubbleRadius, {
+            const body = Bodies.circle(x, y, bubbleRadius, {
                 restitution: 0.8, // Bounciness
                 friction: 0.001,
                 frictionAir: 0.015, // Air resistance
                 density: 0.04,
-                label: `skill-${index}`
+                label: `skill-${index}`,
             });
+
+            // BIG BANG EXPLOSION FORCE
+            const explodeForce = isMobile ? 0.05 : 0.15;
+            Matter.Body.applyForce(body, body.position, {
+                x: (Math.random() - 0.5) * explodeForce,
+                y: (Math.random() - 0.5) * explodeForce
+            });
+
+            return body;
         });
 
         Composite.add(engine.world, [...walls, ...skillBodies]);
 
         // Native DOM Pointer Events for Dragging & Repulsion
         const handlePointerMove = (e) => {
-            const rect = sceneRef.current.getBoundingClientRect();
+            const rect = sceneEl.getBoundingClientRect();
             pointerRef.current.x = e.clientX - rect.left;
             pointerRef.current.y = e.clientY - rect.top;
         };
 
         const handlePointerDown = (e) => {
             pointerRef.current.isDown = true;
-            const rect = sceneRef.current.getBoundingClientRect();
+            const rect = sceneEl.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
             
@@ -109,8 +104,8 @@ const Skills = () => {
             }
         };
 
-        sceneRef.current.addEventListener('pointermove', handlePointerMove);
-        sceneRef.current.addEventListener('pointerdown', handlePointerDown);
+        sceneEl.addEventListener('pointermove', handlePointerMove);
+        sceneEl.addEventListener('pointerdown', handlePointerDown);
         window.addEventListener('pointerup', handlePointerUp);
 
         // Custom Physics Loop (Repulsion and Continuous Movement)
@@ -167,10 +162,75 @@ const Skills = () => {
                     // Update div position and rotation
                     el.style.transform = `translate(${body.position.x - bubbleRadius}px, ${body.position.y - bubbleRadius}px) rotate(${body.angle}rad)`;
                     
-                    // Counter-rotate the image so the logo stays perfectly upright
-                    const img = el.querySelector('.skill-logo');
-                    if (img) {
-                        img.style.transform = `rotate(-${body.angle}rad)`;
+                    // Counter-rotate the image so the logo stays perfectly upright & add parallax based on velocity
+                    const logoWrapper = el.querySelector('.skill-logo-wrapper');
+                    if (logoWrapper) {
+                        // Calculate parallax translation based on physics velocity
+                        const rawParallaxX = body.velocity.x * -1.5;
+                        const rawParallaxY = body.velocity.y * -1.5;
+                        
+                        // THE FIX: Clamp the max parallax distance.
+                        // During a massive collision, velocity spikes infinitely, which was blasting the logo out of the overflow mask.
+                        // We trap the logo inside a safe radius (40% of the bubble size) so it physically cannot leave the glass.
+                        const maxParallax = bubbleRadius * 0.4; 
+                        const clampedX = Math.max(-maxParallax, Math.min(maxParallax, rawParallaxX));
+                        const clampedY = Math.max(-maxParallax, Math.min(maxParallax, rawParallaxY));
+                        
+                        logoWrapper.style.transform = `rotate(-${body.angle}rad) translate(${clampedX}px, ${clampedY}px)`;
+                    }
+
+                    // Slosh the liquid based on true physical acceleration (Not just velocity)
+                    const tiltContainer = el.querySelector('.liquid-tilt-container');
+                    const wave1 = el.querySelector('.liquid-wave-1');
+                    const wave2 = el.querySelector('.liquid-wave-2');
+                    
+                    if (tiltContainer && wave1 && wave2) {
+                        // Initialize physical properties for water inside the bubble
+                        if (body.sloshAngle === undefined) {
+                            body.sloshAngle = 0;
+                            body.sloshVelocity = 0;
+                            body.prevVelocity = { x: body.velocity.x, y: body.velocity.y };
+                            body.waveAngle = Math.random() * 360;
+                            body.waveSpeed = 0;
+                        }
+
+                        // 1. Calculate Acceleration (change in velocity). This handles wall smashes seamlessly.
+                        const accelX = body.velocity.x - body.prevVelocity.x;
+                        const accelY = body.velocity.y - body.prevVelocity.y;
+                        body.prevVelocity = { x: body.velocity.x, y: body.velocity.y };
+
+                        // 2. Liquid Tilt (Slosh) driven by Acceleration using a damped harmonic oscillator (spring)
+                        // A hard smash against a wall creates massive acceleration, causing a huge visible water slosh.
+                        // While drifting steadily, acceleration is 0, so the water levels out smoothly.
+                        const targetSlosh = -accelX * 15; // Sensitivity to hits and drags
+                        
+                        body.sloshVelocity += (targetSlosh - body.sloshAngle) * 0.08; // Spring stiffness
+                        body.sloshVelocity -= body.sloshAngle * 0.02; // Gravity pulling water flat
+                        body.sloshVelocity *= 0.88; // Water friction/damping
+                        body.sloshAngle += body.sloshVelocity;
+                        
+                        // Limit the max slosh angle to keep the water inside the glass sphere visual
+                        body.sloshAngle = Math.max(-50, Math.min(50, body.sloshAngle));
+                        
+                        // Apply counter-rotation + slosh angle
+                        tiltContainer.style.transform = `rotate(${-body.angle + (body.sloshAngle * Math.PI / 180)}rad)`;
+
+                        // 3. Liquid Wave Surface (Churning/Spinning) driven by Kinetic Energy
+                        const energy = Math.abs(accelX) + Math.abs(accelY) + (Math.abs(body.velocity.x) + Math.abs(body.velocity.y)) * 0.05;
+                        
+                        body.waveSpeed += energy * 0.8;
+                        body.waveSpeed *= 0.94; // friction on the wave spinning
+                        
+                        if (body.waveSpeed > 0.05) {
+                            body.waveAngle += body.waveSpeed;
+                        } else {
+                            // Perfect stabilization: settle into the nearest completely flat structural angle
+                            const nearestFlatAngle = Math.round(body.waveAngle / 90) * 90;
+                            body.waveAngle += (nearestFlatAngle - body.waveAngle) * 0.08;
+                        }
+
+                        wave1.style.transform = `rotate(${body.waveAngle}deg)`;
+                        wave2.style.transform = `rotate(${-body.waveAngle * 0.85}deg)`;
                     }
                 }
             });
@@ -180,9 +240,9 @@ const Skills = () => {
         Runner.run(runner, engine);
 
         return () => {
-            if (sceneRef.current) {
-                sceneRef.current.removeEventListener('pointermove', handlePointerMove);
-                sceneRef.current.removeEventListener('pointerdown', handlePointerDown);
+            if (sceneEl) {
+                sceneEl.removeEventListener('pointermove', handlePointerMove);
+                sceneEl.removeEventListener('pointerdown', handlePointerDown);
             }
             window.removeEventListener('pointerup', handlePointerUp);
             Runner.stop(runner);
@@ -228,10 +288,11 @@ const Skills = () => {
 
             {/* Physics Scene Wrapper for Animations */}
             <motion.div
-                initial={{ opacity: 0, y: 100 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 100 }}
-                transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
+                initial={{ opacity: 0, scale: 0 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0, filter: 'blur(10px)' }}
+                transition={{ duration: 1.2, type: 'spring', bounce: 0.4, delay: 0.2 }}
+                viewport={{ once: false }}
                 className="absolute top-0 left-0 w-full h-full z-10"
             >
                 <div 
@@ -242,27 +303,38 @@ const Skills = () => {
                         <div
                             key={skill.slug}
                             ref={(el) => (bubbleRefs.current[index] = el)}
-                            className="absolute top-0 left-0 flex flex-col items-center justify-center rounded-full bg-[rgba(20,20,22,0.6)] border border-zinc-600/30 backdrop-blur-lg shadow-[inset_0_4px_20px_rgba(255,255,255,0.1),0_10px_30px_rgba(0,0,0,0.5)] cursor-grab active:cursor-grabbing hover:bg-[rgba(30,30,35,0.8)] hover:border-zinc-400/50 transition-colors duration-300 group"
+                            className="bubble-capsule group"
                             style={{
                                 width: `${bubbleSize}px`,
                                 height: `${bubbleSize}px`,
-                                willChange: 'transform' // Hardware acceleration
+                                '--liquid-color': `rgba(255, 255, 255, 0.15)`, /* Almost transparent water front wave */
+                                '--liquid-color-dark': `rgba(255, 255, 255, 0.08)` /* Almost transparent water back wave */
                             }}
                         >
-                            {/* 3D Glass Highlight */}
-                            <div className="absolute top-[10%] left-[20%] w-[30%] h-[20%] bg-white opacity-20 rounded-full blur-[2px] pointer-events-none" />
+                            {/* Inner Glass Boundary for overflow masking */}
+                            <div className="bubble-capsule-glass">
+                                {/* Dynamic Liquid Tilt Container */}
+                                <div className="liquid-tilt-container">
+                                    <div className="liquid-wave-2"></div>
+                                    <div className="liquid-wave-1"></div>
+                                </div>
+                                
+                                {/* 3D Glass Highlight */}
+                                <div className="bubble-glare" />
 
-                            {/* Skill Logo (Counter-rotated dynamically) */}
-                            <img 
-                                src={`https://cdn.simpleicons.org/${skill.slug}/${skill.color.replace("#", "")}`} 
-                                alt={skill.name}
-                                draggable={false}
-                                className="skill-logo w-8 h-8 md:w-12 md:h-12 opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300 pointer-events-none"
-                                style={{ filter: "drop-shadow(0 0 10px rgba(255,255,255,0.2))" }}
-                            />
+                                {/* Skill Logo floating inside */}
+                                <div className="skill-logo-wrapper">
+                                    <img 
+                                        src={`https://cdn.simpleicons.org/${skill.slug}/${skill.color.replace("#", "")}`} 
+                                        alt={skill.name}
+                                        draggable={false}
+                                        className="skill-logo w-8 h-8 md:w-12 md:h-12"
+                                    />
+                                </div>
+                            </div>
 
-                            {/* Hidden skill name that shows on hover */}
-                            <div className="absolute -bottom-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-mono text-[10px] md:text-xs font-bold tracking-widest text-white whitespace-nowrap bg-black/80 px-3 py-1 rounded-full border border-zinc-700 pointer-events-none">
+                            {/* Tooltip on hover */}
+                            <div className="skill-tooltip">
                                 {skill.name}
                             </div>
                         </div>

@@ -50,6 +50,8 @@ const Navbar = () => {
 
   // Detect if hamburger is over a light-background section
   useEffect(() => {
+    let rafId = null;
+
     const checkSection = () => {
       if (!hamburgerRef.current || isOpen) return;
       const btn = hamburgerRef.current;
@@ -86,12 +88,21 @@ const Navbar = () => {
       }
     };
 
-    checkSection();
-    window.addEventListener('scroll', checkSection, { passive: true });
-    window.addEventListener('resize', checkSection, { passive: true });
+    const handleScrollThrottled = () => {
+      if (rafId) return;
+      rafId = requestAnimationFrame(() => {
+        checkSection();
+        rafId = null;
+      });
+    };
+
+    checkSection(); // Initial check
+    window.addEventListener('scroll', handleScrollThrottled, { passive: true });
+    window.addEventListener('resize', handleScrollThrottled, { passive: true });
     return () => {
-      window.removeEventListener('scroll', checkSection);
-      window.removeEventListener('resize', checkSection);
+      if (rafId) cancelAnimationFrame(rafId);
+      window.removeEventListener('scroll', handleScrollThrottled);
+      window.removeEventListener('resize', handleScrollThrottled);
     };
   }, [isOpen]);
 
@@ -117,7 +128,7 @@ const Navbar = () => {
         try {
           const el = document.querySelector(item.href);
           if (el) observer.observe(el);
-        } catch (e) {
+        } catch (e) { // eslint-disable-line no-unused-vars
           // ignore invalid selectors if any
         }
       });

@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useState } from 'react';
 import './styles/index.css';
 import Cursor from './components/Cursor'
 import Navbar from "./components/Navbar";
@@ -16,24 +16,30 @@ import SmoothCursor from './components/SmoothCursor'
 const Partical_BG = lazy(() => import('./components/Partical_BG'));
 
 const App = () => {
+  const [appReady, setAppReady] = useState(false);
+
   return (
     <>
       <Suspense fallback={null}>
         <Partical_BG />
       </Suspense>
       <SmoothCursor/>
-      <Loader/>
+      <Loader onComplete={() => setAppReady(true)} />
 
-      <Navbar/>
-      <Scroll_Indicator/>
+      {appReady && (
+        <>
+          <Navbar/>
+          <Scroll_Indicator/>
 
-      <main>
-        <Hero/>
-        <About/>
-        <Skills/>
-        <Projects/>
-        <Contact/>
-      </main>
+          <main>
+            <Hero/>
+            <About/>
+            <Skills/>
+            <Projects/>
+            <Contact/>
+          </main>
+        </>
+      )}
     </>
   )
 };

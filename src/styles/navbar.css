@@ -10,6 +10,7 @@
   height: 60px;
   background: rgba(5, 5, 5, 0.5);
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 50%;
   display: flex;
@@ -19,6 +20,8 @@
   transition: background 0.4s ease, transform 0.3s ease, border-color 0.4s ease;
   mix-blend-mode: normal;
   pointer-events: auto;
+  will-change: transform, background;
+  transform: translateZ(0); /* Hardware acceleration */
 }
 .nav-hamburger:hover {
   background: rgba(10, 10, 10, 0.85);

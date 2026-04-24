@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import '../styles/loader.css';
 
-const Loader = () => {
+const Loader = ({ onComplete }) => {
   const [percent, setPercent] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
   const [isFading, setIsFading] = useState(false);
@@ -19,6 +19,10 @@ const Loader = () => {
         // Wait 400ms for wave to settle, then begin fade out
         setTimeout(() => {
           setIsFading(true);
+          // Signal App.jsx to mount the Hero section behind the fading loader
+          if (onComplete) {
+            onComplete();
+          }
           // Remove from DOM entirely following 1-second CSS transition
           setTimeout(() => setIsVisible(false), 1000);
         }, 400);
@@ -27,7 +31,7 @@ const Loader = () => {
     }, 60);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [onComplete]);
 
   // Map 0% -> 240 (just below text) and 100% -> 60 (just above text)
   // This tightly synchronizes the visual water level exactly against the typography height
@@ -43,7 +47,9 @@ const Loader = () => {
       <div className="relative w-full max-w-7xl px-4 flex flex-col items-center justify-center h-full">
         
         {/* SVG Liquid Text Container */}
-        <div className="relative w-full h-[30vh] sm:h-[40vh] flex items-center justify-center">
+        <div 
+          className={`relative w-full h-[30vh] sm:h-[40vh] flex items-center justify-center transition-all duration-1200 ease-[cubic-bezier(0.16,1,0.3,1)] ${isFading ? 'scale-[3] md:scale-[3.5] opacity-0 blur-sm' : 'scale-100 opacity-100 blur-0'}`}
+        >
           <svg className="w-full h-full" viewBox="0 0 1000 300" preserveAspectRatio="xMidYMid meet">
             <defs>
               <mask id="text-mask">
@@ -111,7 +117,9 @@ const Loader = () => {
         </div>
 
         {/* Repositioned Counter styled for premium tech aesthetics */}
-        <div className="absolute right-8 bottom-8 md:right-16 md:bottom-16 flex flex-col items-end">
+        <div 
+          className={`absolute right-8 bottom-8 md:right-16 md:bottom-16 flex flex-col items-end transition-all duration-700 ease-out ${isFading ? 'opacity-0 translate-y-8 blur-sm' : 'opacity-100 translate-y-0 blur-0'}`}
+        >
           <div className="font-mono text-[10px] md:text-xs tracking-[0.3em] uppercase text-slate-500 mb-2">
             System Initialization
           </div>

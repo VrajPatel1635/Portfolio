@@ -1,24 +1,38 @@
-import React, { useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
+import React, { useEffect } from 'react';
+import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
+import { containerVariants, itemVariants, scaleLine } from '../utils/animations';
+import { Button } from './ui/Button';
 import '../styles/index.css';
 import '../styles/hero.css';
 
 const Hero = () => {
-  // useRef instead of useState — mouse position is only needed by
-  // SmoothCursor (which has its own listener). Storing it in state
-  // was causing a re-render on every mousemove with no visible effect.
-  const mousePosRef = useRef({ x: 0, y: 0 });
+  // True parallax with framer-motion
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  const springConfig = { damping: 25, stiffness: 150 };
+  const smoothX = useSpring(mouseX, springConfig);
+  const smoothY = useSpring(mouseY, springConfig);
+
+  // Inverse transforms for parallax depth
+  const moveX_large = useTransform(smoothX, [-0.5, 0.5], [-25, 25]);
+  const moveY_large = useTransform(smoothY, [-0.5, 0.5], [-25, 25]);
+
+  const moveX_medium = useTransform(smoothX, [-0.5, 0.5], [-15, 15]);
+  const moveY_medium = useTransform(smoothY, [-0.5, 0.5], [-15, 15]);
+
+  const moveX_small = useTransform(smoothX, [-0.5, 0.5], [10, -10]);
+  const moveY_small = useTransform(smoothY, [-0.5, 0.5], [10, -10]);
 
   useEffect(() => {
     const handleMouseMove = (e) => {
-      mousePosRef.current = {
-        x: (e.clientX / window.innerWidth - 0.5) * 2,
-        y: (e.clientY / window.innerHeight - 0.5) * 2,
-      };
+      // Normalizes scroll safely between -0.5 and 0.5
+      mouseX.set(e.clientX / window.innerWidth - 0.5);
+      mouseY.set(e.clientY / window.innerHeight - 0.5);
     };
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
     return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
+  }, [mouseX, mouseY]);
 
   const scrollToProjects = () => {
     const el = document.getElementById('work')
@@ -46,27 +60,6 @@ const Hero = () => {
     }
   }
 
-  // Staggering variants for the left column
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.15,
-        delayChildren: 0.2,
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 40 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] }
-    }
-  };
-
   return (
     // id="home" added so the Navbar #home anchor resolves correctly
     <section
@@ -93,6 +86,8 @@ const Hero = () => {
           fontWeight: 900,
           color: '#f5f5f5',
           lineHeight: 1,
+          x: moveX_large,
+          y: moveY_large,
         }}
       >
         01
@@ -119,6 +114,8 @@ const Hero = () => {
             fontSize: '18px',
             fontWeight: 300,
             fontFamily: 'monospace',
+            x: moveX_small,
+            y: moveY_small,
           }}
         >
           +
@@ -138,6 +135,8 @@ const Hero = () => {
           top: '15%',
           width: '224px',
           height: '336px',
+          x: moveX_medium,
+          y: moveY_medium,
         }}
       >
         {dotGrid}
@@ -156,38 +155,47 @@ const Hero = () => {
             className="flex-1 lg:max-w-[55%]"
           >
             {/* Giant Name */}
-            <motion.div variants={itemVariants}>
-              <h1
-                className="leading-[0.85] font-black uppercase tracking-tighter"
-                style={{
-                  fontFamily: '"Orbitron", sans-serif',
-                  fontSize: 'clamp(60px, 10vw, 140px)',
-                  color: '#0a0a0a',
-                  margin: 0,
-                }}
-              >
-                VRAJ
-              </h1>
-              <h1
-                className="leading-[0.85] font-black uppercase tracking-tighter"
-                style={{
-                  fontFamily: '"Orbitron", sans-serif',
-                  fontSize: 'clamp(60px, 10vw, 140px)',
-                  color: 'transparent',
-                  WebkitTextStroke: '2px #0a0a0a',
-                  margin: 0,
-                }}
-              >
-                PATEL
-              </h1>
-            </motion.div>
+            <div className="mb-2">
+              <div className="overflow-hidden pb-2">
+                <motion.h1
+                  variants={{
+                    hidden: { y: "110%" },
+                    visible: { y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } }
+                  }}
+                  className="leading-[0.85] font-black uppercase tracking-tighter"
+                  style={{
+                    fontFamily: '"Orbitron", sans-serif',
+                    fontSize: 'clamp(60px, 10vw, 140px)',
+                    color: '#0a0a0a',
+                    margin: 0,
+                  }}
+                >
+                  VRAJ
+                </motion.h1>
+              </div>
+              <div className="overflow-hidden pb-4">
+                <motion.h1
+                  variants={{
+                    hidden: { y: "110%" },
+                    visible: { y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } }
+                  }}
+                  className="leading-[0.85] font-black uppercase tracking-tighter"
+                  style={{
+                    fontFamily: '"Orbitron", sans-serif',
+                    fontSize: 'clamp(60px, 10vw, 140px)',
+                    color: 'transparent',
+                    WebkitTextStroke: '2px #0a0a0a',
+                    margin: 0,
+                  }}
+                >
+                  PATEL
+                </motion.h1>
+              </div>
+            </div>
 
             {/* Divider line */}
             <motion.div
-              variants={{
-                  hidden: { scaleX: 0, opacity: 0 },
-                  visible: { scaleX: 1, opacity: 1, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } }
-              }}
+              variants={scaleLine}
               style={{ transformOrigin: "left" }}
               className="my-7 w-15 h-0.5 bg-[#0a0a0a]"
             />
@@ -209,30 +217,29 @@ const Hero = () => {
               variants={itemVariants}
               className="flex items-center gap-4 pointer-events-auto"
             >
-              <button
-                onClick={scrollToProjects}
-                className="hero-btn-primary group"
-              >
+              <Button onClick={scrollToProjects} variant="primary" className="group">
                 <span>VIEW PROJECTS</span>
                 <svg className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                 </svg>
-              </button>
-              <button
-                onClick={scrollToContact}
-                className="hero-btn-outline"
-              >
+              </Button>
+
+              <Button onClick={scrollToContact} variant="outline">
                 LET'S TALK
-              </button>
+              </Button>
             </motion.div>
           </motion.div>
 
           {/* ── RIGHT COLUMN ── */}
           <motion.div
-            initial={{ opacity: 0, x: 100, rotate: 5 }}
-            whileInView={{ opacity: 1, x: 0, rotate: 0 }}
-            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.3 }}
-            viewport={{ once: false, amount: 0.2 }}
+            initial={{ opacity: 0, x: 100, rotate: 5, y: 0 }}
+            animate={{ opacity: 1, x: 0, rotate: 0, y: [-4, 4, -4] }}
+            transition={{
+              opacity: { duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.3 },
+              x: { duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.3 },
+              rotate: { duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.3 },
+              y: { duration: 6, repeat: Infinity, ease: "easeInOut" }
+            }}
             className="flex-1 lg:max-w-[42%] w-full"
           >
             {/* Code editor card */}
