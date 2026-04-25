@@ -1,14 +1,261 @@
+/* ============================================================
+   LOADER — Premium CSS
+   All animations use transform/opacity only (GPU composited).
+   ============================================================ */
+
+:root {
+  --digit-h: 56px;
+  --digit-w: 38px;
+}
+
+/* ── Base overlay ── */
 #loader {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   background: #050505;
   z-index: 9999;
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#loader.loader-fading {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ── Ambient radial depth ── */
+.loader-ambient {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 70% 50% at 50% 50%,
+    rgba(148, 163, 184, 0.05) 0%,
+    transparent 70%);
+  pointer-events: none;
+}
+
+/* ── Corner brackets ── */
+.loader-corner {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  opacity: 0;
+  transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.loader-corner.in { opacity: 1; }
+
+.loader-corner--tl {
+  top: 28px; left: 28px;
+  border-top: 1px solid rgba(255,255,255,0.18);
+  border-left: 1px solid rgba(255,255,255,0.18);
+  transform: translate(-10px, -10px);
+}
+.loader-corner--tl.in { transform: translate(0, 0); }
+
+.loader-corner--tr {
+  top: 28px; right: 28px;
+  border-top: 1px solid rgba(255,255,255,0.18);
+  border-right: 1px solid rgba(255,255,255,0.18);
+  transform: translate(10px, -10px);
+}
+.loader-corner--tr.in { transform: translate(0, 0); }
+
+.loader-corner--bl {
+  bottom: 28px; left: 28px;
+  border-bottom: 1px solid rgba(255,255,255,0.18);
+  border-left: 1px solid rgba(255,255,255,0.18);
+  transform: translate(-10px, 10px);
+}
+.loader-corner--bl.in { transform: translate(0, 0); }
+
+.loader-corner--br {
+  bottom: 28px; right: 28px;
+  border-bottom: 1px solid rgba(255,255,255,0.18);
+  border-right: 1px solid rgba(255,255,255,0.18);
+  transform: translate(10px, 10px);
+}
+.loader-corner--br.in { transform: translate(0, 0); }
+
+/* ── SVG liquid text ── */
+.loader-svg-wrapper {
+  width: 100%;
+  max-width: 1100px;
+  padding: 0 24px;
+  height: clamp(130px, 28vw, 260px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.9s ease 0.1s, transform 0.9s cubic-bezier(0.16,1,0.3,1) 0.1s;
+}
+.loader-svg-wrapper.in {
+  opacity: 1;
+  transform: translateY(0);
+}
+.loader-svg-wrapper.exit {
+  transform: scale(3.2);
+  opacity: 0;
+  transition: transform 1.1s cubic-bezier(0.16,1,0.3,1),
+              opacity 0.7s ease 0.1s;
+}
+.loader-svg { width: 100%; height: 100%; }
+
+/* ── Slot-machine counter (bottom-right) ── */
+.loader-counter {
+  position: absolute;
+  bottom: 40px;
+  right: 48px;
+  display: flex;
   flex-direction: column;
-  transition: opacity 1s ease;
+  align-items: flex-end;
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.8s ease 0.35s, transform 0.8s cubic-bezier(0.16,1,0.3,1) 0.35s;
+}
+.loader-counter.in {
+  opacity: 1;
+  transform: translateY(0);
+}
+.loader-counter.exit {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+
+/* Phase label */
+.loader-phase {
+  font-family: 'Inter', 'SF Mono', ui-monospace, monospace;
+  font-size: 9px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.28);
+  margin-bottom: 10px;
+}
+
+/* Digit row */
+.loader-digits {
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
+}
+
+/* Single digit window — clips the rolling strip */
+.loader-digit-window {
+  width: var(--digit-w);
+  height: var(--digit-h);
+  overflow: hidden;
+  position: relative;
+}
+
+/* Soft fade mask top & bottom so digits "arrive" smoothly */
+.loader-digit-window::before,
+.loader-digit-window::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  height: 18px;
+  z-index: 2;
+  pointer-events: none;
+}
+.loader-digit-window::before {
+  top: 0;
+  background: linear-gradient(to bottom, #050505 20%, transparent);
+}
+.loader-digit-window::after {
+  bottom: 0;
+  background: linear-gradient(to top, #050505 20%, transparent);
+}
+
+/* The rolling strip */
+.loader-digit-track {
+  display: flex;
+  flex-direction: column;
+  will-change: transform;
+  transition: transform 0.42s cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+/* Individual digit cell */
+.loader-digit-cell {
+  width: var(--digit-w);
+  height: var(--digit-h);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Inter', ui-sans-serif, sans-serif;
+  font-size: 46px;
+  font-weight: 200;
+  color: rgba(255,255,255,0.88);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  user-select: none;
+}
+
+/* Percent sign */
+.loader-pct {
+  font-family: 'Inter', ui-sans-serif, sans-serif;
+  font-size: 20px;
+  font-weight: 200;
+  color: rgba(255,255,255,0.28);
+  margin-left: 4px;
+  margin-bottom: 9px;
+}
+
+/* Thin progress bar */
+.loader-bar-track {
+  width: 148px;
+  height: 1px;
+  background: rgba(255,255,255,0.07);
+  margin-top: 14px;
+  border-radius: 1px;
+  overflow: hidden;
+}
+.loader-bar-fill {
+  height: 100%;
+  background: rgba(255,255,255,0.45);
+  border-radius: 1px;
+  /* width driven directly via DOM ref in rAF — no CSS transition needed */
+}
+
+/* ── Horizontal scan line ── */
+.loader-scanline {
+  position: absolute;
+  left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(to right,
+    transparent 0%,
+    rgba(255,255,255,0.06) 40%,
+    rgba(255,255,255,0.06) 60%,
+    transparent 100%);
+  top: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.loader-scanline.in {
+  opacity: 1;
+  animation: loaderScan 5s linear 0.6s infinite;
+}
+
+@keyframes loaderScan {
+  0%   { top: 0%; }
+  100% { top: 100%; }
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  :root {
+    --digit-h: 42px;
+    --digit-w: 28px;
+  }
+  .loader-digit-cell { font-size: 34px; }
+  .loader-pct { font-size: 16px; margin-bottom: 7px; }
+  .loader-counter { bottom: 24px; right: 24px; }
+  .loader-corner { width: 20px; height: 20px; }
+  .loader-corner--tl { top: 18px; left: 18px; }
+  .loader-corner--tr { top: 18px; right: 18px; }
+  .loader-corner--bl { bottom: 18px; left: 18px; }
+  .loader-corner--br { bottom: 18px; right: 18px; }
+  .loader-bar-track { width: 110px; }
 }

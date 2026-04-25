@@ -253,7 +253,7 @@ const Navbar = () => {
               <a href="https://github.com/VrajPatel1635" target="_blank" rel="noopener noreferrer" className="nav-social-link hover-trigger">
                 GITHUB
               </a>
-              <a href="https://www.linkedin.com/in/vraj-patel-b5111a25b/" target="_blank" rel="noopener noreferrer" className="nav-social-link hover-trigger">
+              <a href="https://www.linkedin.com/in/vraj-patel-1a28762ba/" target="_blank" rel="noopener noreferrer" className="nav-social-link hover-trigger">
                 LINKEDIN
               </a>
             </div>
