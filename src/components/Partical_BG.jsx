@@ -230,6 +230,11 @@ const ThreeBackground = () => {
       }
     });
 
+    const resizeObserver = new ResizeObserver(() => {
+      ScrollTrigger.refresh();
+    });
+    resizeObserver.observe(document.body);
+
     const onResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
@@ -253,6 +258,7 @@ const ThreeBackground = () => {
     }
 
     return () => {
+      resizeObserver.disconnect();
       window.removeEventListener('resize', onResize);
       if (rafId != null) cancelAnimationFrame(rafId);
       renderer.dispose();
