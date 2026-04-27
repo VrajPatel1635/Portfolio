@@ -325,7 +325,7 @@ const Skills = () => {
                                 {/* Skill Logo floating inside */}
                                 <div className="skill-logo-wrapper">
                                     <img 
-                                        src={`https://cdn.simpleicons.org/${skill.slug}/${skill.color.replace("#", "")}`} 
+                                        src={skill.img ? skill.img : `https://cdn.simpleicons.org/${skill.slug}/${skill.color.replace("#", "")}`} 
                                         alt={skill.name}
                                         draggable={false}
                                         className="skill-logo w-8 h-8 md:w-12 md:h-12"

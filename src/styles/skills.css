@@ -125,14 +125,14 @@
       inset 0 4px 20px rgba(255, 255, 255, 0.1),
       inset 0 -10px 30px rgba(0, 0, 0, 0.6),
       0 15px 35px rgba(0, 0, 0, 0.5);
-  cursor: grab;
+  cursor: none;
   /* Hardware acceleration */
   transform-style: preserve-3d;
   will-change: transform;
 }
 
 .bubble-capsule:active {
-  cursor: grabbing;
+  cursor: none;
 }
 
 /* Base sphere container that keeps overflowing liquid inside */

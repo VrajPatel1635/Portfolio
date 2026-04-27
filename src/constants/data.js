@@ -13,7 +13,11 @@ export const SKILLS = [
   { name: "REST API",    color: "#85EA2D", slug: "swagger"          },
   { name: "Git",         color: "#F05032", slug: "git"              },
   { name: "GitHub",      color: "#FFFFFF", slug: "github"           },
-  { name: "Python",      color: "#3776AB", slug: "python"           }
+  { name: "Python",      color: "#3776AB", slug: "python"           },
+  { name: "Numpy",       color: "#013243", slug: "numpy"            },
+  { name: "Pandas",      color: "#150458", slug: "pandas"           },
+  { name: "Matplotlib",  color: "#11557C", slug: "matplotlib", img: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/matplotlib/matplotlib-original.svg" },
+  { name: "Scikit-learn",color: "#F7931E", slug: "scikitlearn"      }
 ];
 
 export const PROJECTS = [
