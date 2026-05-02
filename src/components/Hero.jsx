@@ -296,7 +296,7 @@ const Hero = () => {
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: "easeOut", delay: 0.8 }}
         viewport={{ once: false, amount: 0.1 }}
-        className="absolute bottom-8 right-8 md:bottom-12 md:right-12 pointer-events-none z-30"
+        className="absolute bottom-8 right-8 md:bottom-12 md:right-12 pointer-events-auto z-30"
       >
         <div
           onClick={() => {
@@ -304,7 +304,6 @@ const Hero = () => {
             if (el) el.scrollIntoView({ behavior: 'smooth' });
           }}
           className="relative w-20 h-20 md:w-24 md:h-24 flex items-center justify-center"
-          style={{ cursor: 'pointer' }}
           role="button"
           aria-label="Scroll down to About section"
           tabIndex={0}
