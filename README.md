@@ -2,7 +2,7 @@
 
 A modern, full-stack developer portfolio built with **React + Vite**, featuring a Three.js particle background, GSAP scroll animations, and a Framer Motion custom cursor.
 
-🔗 **Live:** [vrajpatel.dev](https://vrajpatel.dev)
+🔗 **Live:** [vrajpatel.dev](https://vraj-patel.me)
 
 ---
 
